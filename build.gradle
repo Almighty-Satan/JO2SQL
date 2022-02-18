@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 compileJava.options.encoding = 'UTF-8'
@@ -14,4 +15,26 @@ repositories {
 
 dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.36'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = 'JO2SQL'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url 'https://repo.varoplugin.de/repository/maven-private/'
+            credentials {
+                username project.hasProperty('repouser') ? project.property('repouser').toString() : null
+                password project.hasProperty('repopassword') ? project.property('repopassword').toString() : null
+            }
+        }
+    }
 }
