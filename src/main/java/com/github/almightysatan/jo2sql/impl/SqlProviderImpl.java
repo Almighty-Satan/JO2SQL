@@ -20,10 +20,12 @@ import org.slf4j.LoggerFactory;
 
 import com.github.almightysatan.jo2sql.AsyncDatabaseException;
 import com.github.almightysatan.jo2sql.DatabaseAction;
-import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.PreparedDelete;
+import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.SqlProvider;
+import com.github.almightysatan.jo2sql.SqlSerializable;
 
 public class SqlProviderImpl implements SqlProvider {
 
@@ -69,6 +71,16 @@ public class SqlProviderImpl implements SqlProvider {
 	@Override
 	public <T extends SqlSerializable> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, String... keys) {
 		return this.getTable(type).prepareMultiSelect(keys);
+	}
+
+	@Override
+	public <T extends SqlSerializable> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type) {
+		return this.getTable(type).prepareObjectDelete();
+	}
+
+	@Override
+	public <T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, String... keys) {
+		return this.getTable(type).prepareDelete(keys);
 	}
 
 	@SuppressWarnings("unchecked")

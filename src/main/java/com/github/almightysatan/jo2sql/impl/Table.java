@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.DatabaseAction;
+import com.github.almightysatan.jo2sql.PreparedDelete;
+import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.SqlSerializable;
@@ -27,7 +29,7 @@ class Table<T extends SqlSerializable> {
 	private final String name;
 	private final String fullName;
 	private final Map<String, FieldColumn> columns = new LinkedHashMap<>();
-	private final AbstractIndex primaryKey = new PrimaryKey();;
+	private final AbstractIndex primaryKey = new PrimaryKey();
 	private boolean created;
 
 	Table(SqlProviderImpl provider, Class<T> type) throws NoSuchMethodException, SecurityException,
@@ -260,6 +262,84 @@ class Table<T extends SqlSerializable> {
 		return value;
 	}
 
+	PreparedObjectDelete<T> prepareObjectDelete() {
+		if (this.primaryKey.indexColumns.size() == 0)
+			throw new Error("Missing primary key in table " + this.getName());
+
+		FieldColumn[] columns = new FieldColumn[this.primaryKey.indexColumns.size()];
+		StringBuilder builder = new StringBuilder("DELETE FROM ").append(this.fullName);
+
+		builder.append("WHERE");
+		int i = 0;
+		for (FieldColumn column : this.primaryKey.indexColumns) {
+			String key = column.getName();
+			if (this.columns.containsKey(key)) {
+				if (i != 0)
+					builder.append(" AND ");
+				builder.append("`").append(key).append("`=?");
+				columns[i++] = this.columns.get(key);
+			} else
+				throw new Error(String.format("Unknown key %s for table %s", key, this.name));
+		}
+		String sql = builder.append(";").toString();
+
+		return new PreparedObjectDelete<T>() {
+			private CachedStatement statement;
+
+			@Override
+			public DatabaseAction<Void> object(T object) {
+				return Table.this.provider.createDatabaseAction(() -> {
+					Table.this.createIfNecessary();
+
+					if (this.statement == null)
+						this.statement = Table.this.provider.prepareStatement(sql);
+
+					for (int i = 0; i < columns.length; i++)
+						this.statement.setParameter(i, columns[i].getType(), columns[i].getField().get(object));
+					Table.this.provider.executeUpdate(this.statement);
+					return null;
+				});
+			}
+		};
+	}
+
+	PreparedDelete prepareDelete(String... keys) {
+		FieldColumn[] columns = new FieldColumn[keys.length];
+		StringBuilder builder = new StringBuilder("DELETE FROM ").append(this.fullName);
+		if (keys.length > 0) {
+			builder.append("WHERE");
+			int i = 0;
+			for (String key : keys)
+				if (this.columns.containsKey(key)) {
+					if (i != 0)
+						builder.append(" AND ");
+					builder.append("`").append(key).append("`=?");
+					columns[i++] = this.columns.get(key);
+				} else
+					throw new Error(String.format("Unknown key %s for table %s", key, this.name));
+		}
+		String sql = builder.append(";").toString();
+
+		return new PreparedDelete() {
+			private CachedStatement statement;
+
+			@Override
+			public DatabaseAction<Void> values(Object... values) {
+				return Table.this.provider.createDatabaseAction(() -> {
+					Table.this.createIfNecessary();
+
+					if (this.statement == null)
+						this.statement = Table.this.provider.prepareStatement(sql);
+
+					for (int i = 0; i < columns.length; i++)
+						this.statement.setParameter(i, columns[i].getType(), values[i]);
+					Table.this.provider.executeUpdate(this.statement);
+					return null;
+				});
+			}
+		};
+	}
+
 	Class<T> getType() {
 		return this.type;
 	}
@@ -294,7 +374,7 @@ class Table<T extends SqlSerializable> {
 	}
 
 	private static class FieldColumn {
-		
+
 		private Field field;
 		private DataType type;
 		private Column annotation;
@@ -338,11 +418,11 @@ class Table<T extends SqlSerializable> {
 		private String getName() {
 			return this.annotation.value();
 		}
-		
+
 		private Field getField() {
 			return this.field;
 		}
-		
+
 		private DataType getType() {
 			return this.type;
 		}
