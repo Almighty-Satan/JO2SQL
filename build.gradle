@@ -15,7 +15,12 @@ repositories {
 }
 
 dependencies {
+	implementation 'mysql:mysql-connector-java:8.0.28'
+	implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
     implementation 'org.slf4j:slf4j-api:1.7.36'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testImplementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
 }
 
 java {
@@ -43,4 +48,8 @@ publishing {
             }
         }
     }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }

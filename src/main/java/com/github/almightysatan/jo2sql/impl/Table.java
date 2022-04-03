@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.github.almightysatan.jo2sql.Column;
+import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.DatabaseAction;
 import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
@@ -41,25 +42,25 @@ import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 
-class Table<T extends SqlSerializable> {
+public abstract class Table<T extends SqlSerializable> {
 
-	private final SqlProviderImpl provider;
+	protected final SqlProviderImpl provider;
 	private final Class<T> type;
 	private final Constructor<T> constructor;
-	private final String name;
-	private final String fullName;
-	private final Map<String, FieldColumn> columns = new LinkedHashMap<>();
-	private final AbstractIndex primaryKey = new PrimaryKey();
+	protected final String name;
+	protected final String fullName;
+	protected final Map<String, FieldColumn> columns = new LinkedHashMap<>();
+	protected final AbstractIndex primaryKey = new PrimaryKey();
 	private boolean created;
 
-	Table(SqlProviderImpl provider, Class<T> type) throws NoSuchMethodException, SecurityException,
+	protected Table(SqlProviderImpl provider, Class<T> type) throws NoSuchMethodException, SecurityException,
 			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		this.provider = provider;
 		this.type = type;
 		this.constructor = type.getDeclaredConstructor();
 		this.constructor.setAccessible(true);
 		this.name = this.constructor.newInstance().getTableName();
-		this.fullName = "`" + provider.getSchema() + "`.`" + this.name + "`";
+		this.fullName = this.getFullName(this.name);
 
 		for (Field field : type.getDeclaredFields()) {
 			Column annotation = field.getAnnotation(Column.class);
@@ -67,7 +68,7 @@ class Table<T extends SqlSerializable> {
 				if (this.columns.containsKey(annotation.value()))
 					throw new Error(
 							String.format("Duplicate column name: %s in class %s", annotation.value(), type.getName()));
-				FieldColumn column = new FieldColumn(field, annotation);
+				FieldColumn column = new FieldColumn(field, provider.getDataType(field.getType()), annotation);
 				if (annotation.primary())
 					this.primaryKey.indexColumns.add(column);
 				this.columns.put(annotation.value(), column);
@@ -78,6 +79,12 @@ class Table<T extends SqlSerializable> {
 			throw new Error("No columns found in class: " + type.getName());
 	}
 
+	protected String getFullName(String name) {
+		return name;
+	}
+
+	protected abstract String getLastInsertIdFunc();
+
 	void createIfNecessary() throws SQLException {
 		if (!this.created) {
 			this.check();
@@ -85,59 +92,10 @@ class Table<T extends SqlSerializable> {
 		}
 	}
 
-	private void check() throws SQLException {
-		if (!this.provider.executeQuery("SELECT * FROM information_schema.tables WHERE table_schema = '"
-				+ this.provider.getSchema() + "' AND table_name = '" + this.name + "' LIMIT 1;").next()) {
-			// Table does not exist
-			this.provider.getLogger().info("Creating table {}", this.name);
-
-			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
-			boolean first = true;
-			for (FieldColumn column : this.columns.values()) {
-				if (first)
-					first = false;
-				else
-					statement.append(",");
-				column.appendColumn(statement);
-				column.appendIndex(statement, ",");
-			}
-			if (!this.primaryKey.indexColumns.isEmpty())
-				this.primaryKey.appendIndex(statement, ",");
-			statement.append(");");
-
-			this.provider.executeUpdate(statement.toString());
-		} else {
-			// Table exists
-			CachedStatement checkRowStatement = this.provider.prepareStatement(
-					"SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1;");
-
-			checkRowStatement.setParameter(0, DataType.STRING, this.provider.getSchema());
-			checkRowStatement.setParameter(1, DataType.STRING, this.name);
-
-			for (FieldColumn column : this.columns.values()) {
-				checkRowStatement.setParameter(2, DataType.STRING, column.getName());
-
-				if (!this.provider.executeQuery(checkRowStatement).next()) {
-					// Column does not exist
-					this.provider.getLogger().info("Adding column {} to tabel {}", column.getName(), this.name);
-
-					StringBuilder statement = new StringBuilder();
-					statement.append("ALTER TABLE `").append(this.provider.getSchema()).append("`.`").append(this.name)
-							.append("`").append(" ADD ");
-					column.appendColumn(statement);
-					// TODO properly implement this
-					// column.appendIndex(statement, ",ADD ");
-					// this.primaryKey.appendIndex(statement, ",ADD ");
-					statement.append(";");
-
-					this.provider.executeUpdate(statement.toString());
-				}
-			}
-		}
-	}
+	protected abstract void check() throws SQLException;
 
 	PreparedReplace<T, Void> prepareReplace() {
-		String sql = this.buildReplaceSql().toString();
+		String sql = this.buildReplaceSql();
 
 		return new PreparedReplace<T, Void>() {
 
@@ -159,7 +117,7 @@ class Table<T extends SqlSerializable> {
 	}
 
 	PreparedReplace<T, Long> prepareAiReplace() {
-		String sql = this.buildReplaceSql().append("SELECT LAST_INSERT_ID();").toString();
+		String sql = this.buildReplaceSql();
 
 		return new PreparedReplace<T, Long>() {
 
@@ -173,7 +131,9 @@ class Table<T extends SqlSerializable> {
 					if (this.statement == null)
 						this.statement = Table.this.provider.prepareStatement(sql);
 					Table.this.loadValues(this.statement, value);
-					ResultSet result = Table.this.provider.executeMultiQuery(this.statement);
+					Table.this.provider.executeUpdate(this.statement);
+					ResultSet result = Table.this.provider
+							.executeQuery("SELECT " + Table.this.getLastInsertIdFunc() + "();");
 					result.next();
 					return result.getLong(1);
 				});
@@ -181,7 +141,7 @@ class Table<T extends SqlSerializable> {
 		};
 	}
 
-	private StringBuilder buildReplaceSql() {
+	private String buildReplaceSql() {
 		StringBuilder replaceBuilder = new StringBuilder().append("REPLACE INTO ").append(this.fullName).append(" (`");
 		boolean first = true;
 		for (FieldColumn column : this.columns.values()) {
@@ -198,7 +158,7 @@ class Table<T extends SqlSerializable> {
 				replaceBuilder.append(",");
 			replaceBuilder.append("?");
 		}
-		return replaceBuilder.append(");");
+		return replaceBuilder.append(");").toString();
 	}
 
 	private void loadValues(CachedStatement statement, T object)
@@ -239,7 +199,7 @@ class Table<T extends SqlSerializable> {
 
 	private <X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, String... keys) {
 		FieldColumn[] columns = new FieldColumn[keys.length];
-		StringBuilder builder = new StringBuilder("SELECT * FROM ").append(this.fullName);
+		StringBuilder builder = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ");
 		if (keys.length > 0) {
 			builder.append("WHERE");
 			int i = 0;
@@ -368,17 +328,17 @@ class Table<T extends SqlSerializable> {
 		return this.name;
 	}
 
-	private abstract class AbstractIndex {
+	public abstract class AbstractIndex {
 
-		List<FieldColumn> indexColumns = new ArrayList<>();
+		public List<FieldColumn> indexColumns = new ArrayList<>();
 
-		abstract void appendIndex(StringBuilder builder, String delimiter);
+		public abstract void appendIndex(StringBuilder builder, String delimiter);
 	}
 
 	private class Index extends AbstractIndex {
 
 		@Override
-		void appendIndex(StringBuilder builder, String delimiter) {
+		public void appendIndex(StringBuilder builder, String delimiter) {
 			// TODO Auto-generated method stub
 		}
 	}
@@ -386,14 +346,14 @@ class Table<T extends SqlSerializable> {
 	private class PrimaryKey extends AbstractIndex {
 
 		@Override
-		void appendIndex(StringBuilder builder, String delimiter) {
+		public void appendIndex(StringBuilder builder, String delimiter) {
 			builder.append(delimiter).append("PRIMARY KEY (`")
 					.append(this.indexColumns.stream().map(FieldColumn::getName).collect(Collectors.joining("`,`")))
 					.append("`)");
 		}
 	}
 
-	private static class FieldColumn {
+	public static class FieldColumn {
 
 		private Field field;
 		private DataType type;
@@ -408,11 +368,7 @@ class Table<T extends SqlSerializable> {
 			this.type = type;
 		}
 
-		private FieldColumn(Field field, Column annotation) {
-			this(field, DataType.get(field.getType()), annotation);
-		}
-
-		private void appendColumn(StringBuilder builder) {
+		public void appendColumn(StringBuilder builder) {
 			builder.append("`").append(this.annotation.value()).append("` ")
 					.append(this.type.getDatatype(this.annotation.size()));
 
@@ -425,7 +381,7 @@ class Table<T extends SqlSerializable> {
 				builder.append(" AUTO_INCREMENT");
 		}
 
-		private void appendIndex(StringBuilder builder, String delimiter) {
+		public void appendIndex(StringBuilder builder, String delimiter) {
 			if (this.annotation.unique())
 				builder.append(delimiter).append("UNIQUE INDEX `").append(this.annotation.value()).append("_UNIQUE` (`")
 						.append(this.annotation.value()).append("` ASC) VISIBLE");
@@ -435,7 +391,7 @@ class Table<T extends SqlSerializable> {
 						.append(this.annotation.value()).append("` ASC) VISIBLE");
 		}
 
-		private String getName() {
+		public String getName() {
 			return this.annotation.value();
 		}
 

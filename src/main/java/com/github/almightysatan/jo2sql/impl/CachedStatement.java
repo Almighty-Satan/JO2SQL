@@ -24,29 +24,27 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-class CachedStatement {
+import com.github.almightysatan.jo2sql.DataType;
+
+public class CachedStatement {
 
 	private final String sql;
 	private final DataType[] parameterTypes;
 	private final Object[] parameters;
 	private PreparedStatement statement;
 
-	CachedStatement(String sql, int numValues) {
+	public CachedStatement(String sql, int numValues) {
 		this.sql = sql;
 		this.parameterTypes = new DataType[numValues];
 		this.parameters = new Object[numValues];
 	}
 
-	void setParameter(int parameterIndex, DataType parameterType, Object parameter) {
+	public void setParameter(int parameterIndex, DataType parameterType, Object parameter) {
 		this.parameterTypes[parameterIndex] = parameterType;
 		this.parameters[parameterIndex] = parameter;
 	}
 
-	void setParameter(int parameterIndex, Object parameter) {
-		this.setParameter(parameterIndex, DataType.get(parameter.getClass()), parameter);
-	}
-
-	PreparedStatement getValidPreparedStatement(Connection connection) throws SQLException {
+	public PreparedStatement getValidPreparedStatement(Connection connection) throws SQLException {
 		if (this.statement == null || this.statement.getConnection() != connection)
 			this.statement = connection.prepareStatement(this.sql);
 
