@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.github.almightysatan.jo2sql.DataType;
@@ -39,7 +40,7 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 	private final String path;
 
 	private SqliteProviderImpl(List<DataType> types, String path) {
-		super(types);
+		super(types = new ArrayList<>(types));
 		types.add(STRING_DATA_TYPE);
 		this.path = path;
 

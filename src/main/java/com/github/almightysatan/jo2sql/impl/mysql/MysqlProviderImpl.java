@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.github.almightysatan.jo2sql.DataType;
@@ -41,7 +42,7 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	private final String schema;
 
 	public MysqlProviderImpl(List<DataType> types, String url, String user, String password, String schema) {
-		super(types);
+		super(types = new ArrayList<>(types));
 		types.add(STRING_DATA_TYPE);
 		this.url = url;
 		this.user = user;

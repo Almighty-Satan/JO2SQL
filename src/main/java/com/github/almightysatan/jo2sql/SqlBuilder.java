@@ -22,21 +22,33 @@ package com.github.almightysatan.jo2sql;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import com.github.almightysatan.jo2sql.impl.mysql.MysqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.sqlite.SqliteProviderImpl;
 
 public class SqlBuilder {
+	
+	private List<DataType> dataTypes = new ArrayList<>();
+	
+	public void addDataTypes(DataType... dataTypes) {
+		this.dataTypes.addAll(Arrays.asList(dataTypes));
+	}
+	
+	public void addDataTypes(List<DataType> dataTypes) {
+		this.dataTypes.addAll(dataTypes);
+	}
 
 	public SqlProvider mysql(String url, String user, String password, String schema) {
-		return new MysqlProviderImpl(new ArrayList<>(), url, user, password, schema);
+		return new MysqlProviderImpl(this.dataTypes, url, user, password, schema);
 	}
 
 	public SqlProvider sqlite() {
-		return new SqliteProviderImpl(new ArrayList<>());
+		return new SqliteProviderImpl(this.dataTypes);
 	}
 
 	public SqlProvider sqlite(File file) {
-		return new SqliteProviderImpl(new ArrayList<>(), file);
+		return new SqliteProviderImpl(this.dataTypes, file);
 	}
 }
