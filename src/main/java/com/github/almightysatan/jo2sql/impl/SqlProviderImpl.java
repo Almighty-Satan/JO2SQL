@@ -42,6 +42,7 @@ import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
+import com.github.almightysatan.jo2sql.Selector;
 import com.github.almightysatan.jo2sql.SqlProvider;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.datatypes.BoolDataType;
@@ -136,13 +137,13 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedSelect<T> prepareSelect(Class<T> type, String... keys) {
-		return this.getTable(type).prepareSingleSelect(keys);
+	public <T extends SqlSerializable> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector) {
+		return this.getTable(type).prepareSingleSelect(selector);
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, String... keys) {
-		return this.getTable(type).prepareMultiSelect(keys);
+	public <T extends SqlSerializable> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector) {
+		return this.getTable(type).prepareMultiSelect(selector);
 	}
 
 	@Override
@@ -151,8 +152,8 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, String... keys) {
-		return this.getTable(type).prepareDelete(keys);
+	public <T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, Selector selector) {
+		return this.getTable(type).prepareDelete(selector);
 	}
 
 	protected <T> DatabaseAction<T> createDatabaseAction(ThrowableSupplier<T> action) {

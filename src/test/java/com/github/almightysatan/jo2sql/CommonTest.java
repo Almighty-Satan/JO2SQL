@@ -33,7 +33,8 @@ public class CommonTest {
 		TestObject object = new TestObject("Hello World", true, 420);
 		sql.prepareAiReplace(TestObject.class).object(object).queue();
 
-		TestObject deserialized = sql.prepareSelect(TestObject.class, "string").values(object.string).completeUnsafe();
+		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object.string)
+				.completeUnsafe();
 
 		LOGGER.info("" + object.equals(deserialized));
 		assertEquals(object, deserialized);

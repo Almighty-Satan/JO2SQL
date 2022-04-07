@@ -38,6 +38,7 @@ import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
+import com.github.almightysatan.jo2sql.Selector;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 
 public abstract class Table<T extends SqlSerializable> {
@@ -92,6 +93,14 @@ public abstract class Table<T extends SqlSerializable> {
 	}
 
 	protected abstract void check() throws SQLException;
+
+	private AnnotatedField[] getFields(String... keys) {
+		AnnotatedField[] fields = new AnnotatedField[keys.length];
+		for (int i = 0; i < keys.length; i++)
+			if ((fields[i] = this.fields.get(keys[i])) == null)
+				throw new Error(String.format("Unknown key '%s' for table %s", keys[i], this.name));
+		return fields;
+	}
 
 	PreparedReplace<T, Void> prepareReplace() {
 		String sql = this.buildReplaceSql();
@@ -167,7 +176,7 @@ public abstract class Table<T extends SqlSerializable> {
 			statement.setParameter(i++, field.getType(), field.getField().get(object));
 	}
 
-	PreparedSelect<T> prepareSingleSelect(String... keys) {
+	PreparedSelect<T> prepareSingleSelect(Selector selector) {
 		return this.prepareSelect(result -> {
 			try {
 				if (result.next())
@@ -178,11 +187,11 @@ public abstract class Table<T extends SqlSerializable> {
 					| InvocationTargetException | SQLException e) {
 				throw new Error("Error while parsing result", e);
 			}
-		}, keys);
+		}, selector);
 	}
 
 	@SuppressWarnings("unchecked")
-	PreparedSelect<T[]> prepareMultiSelect(String... keys) {
+	PreparedSelect<T[]> prepareMultiSelect(Selector selector) {
 		return this.prepareSelect(result -> {
 			try {
 				List<T> list = new ArrayList<>();
@@ -193,25 +202,13 @@ public abstract class Table<T extends SqlSerializable> {
 					| InvocationTargetException | SQLException e) {
 				throw new Error("Error while parsing result", e);
 			}
-		}, keys);
+		}, selector);
 	}
 
-	private <X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, String... keys) {
-		AnnotatedField[] fields = new AnnotatedField[keys.length];
-		StringBuilder builder = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ");
-		if (keys.length > 0) {
-			builder.append("WHERE");
-			int i = 0;
-			for (String key : keys)
-				if (this.fields.containsKey(key)) {
-					if (i != 0)
-						builder.append(" AND ");
-					builder.append("`").append(key).append("`=?");
-					fields[i++] = this.fields.get(key);
-				} else
-					throw new Error(String.format("Unknown key %s for table %s", key, this.name));
-		}
-		String sql = builder.append(";").toString();
+	private <X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, Selector selector) {
+		AnnotatedField[] fields = this.getFields(selector.getKeys());
+		String sql = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ").append("WHERE ")
+				.append(selector.getCommand()).append(";").toString();
 
 		return new PreparedSelect<X>() {
 			private CachedStatement statement;
@@ -282,22 +279,10 @@ public abstract class Table<T extends SqlSerializable> {
 		};
 	}
 
-	PreparedDelete prepareDelete(String... keys) {
-		AnnotatedField[] fields = new AnnotatedField[keys.length];
-		StringBuilder builder = new StringBuilder("DELETE FROM ").append(this.fullName);
-		if (keys.length > 0) {
-			builder.append("WHERE");
-			int i = 0;
-			for (String key : keys)
-				if (this.fields.containsKey(key)) {
-					if (i != 0)
-						builder.append(" AND ");
-					builder.append("`").append(key).append("`=?");
-					fields[i++] = this.fields.get(key);
-				} else
-					throw new Error(String.format("Unknown key %s for table %s", key, this.name));
-		}
-		String sql = builder.append(";").toString();
+	PreparedDelete prepareDelete(Selector selector) {
+		AnnotatedField[] fields = this.getFields(selector.getKeys());
+		String sql = new StringBuilder("DELETE FROM ").append(this.fullName).append("WHERE")
+				.append(selector.getCommand()).append(";").toString();
 
 		return new PreparedDelete() {
 			private CachedStatement statement;
