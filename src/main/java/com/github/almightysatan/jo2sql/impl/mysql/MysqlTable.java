@@ -51,7 +51,7 @@ public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 		if (!this.provider.executeQuery("SELECT * FROM information_schema.tables WHERE table_schema = '" + schema
 				+ "' AND table_name = '" + this.name + "' LIMIT 1;").next()) {
 			// Table does not exist
-			this.provider.getLogger().info("Creating table {}", this.name);
+			this.provider.getLogger().info("Creating table %s", this.name);
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;
@@ -81,7 +81,7 @@ public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 
 				if (!this.provider.executeQuery(checkRowStatement).next()) {
 					// Column does not exist
-					this.provider.getLogger().info("Adding column {} to tabel {}", column.getName(), this.name);
+					this.provider.getLogger().info("Adding column %s to tabel %s", column.getName(), this.name);
 
 					StringBuilder statement = new StringBuilder();
 					statement.append("ALTER TABLE `").append(schema).append("`.`").append(this.name).append("`")

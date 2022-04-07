@@ -18,24 +18,22 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql;
+package com.github.almightysatan.jo2sql.logger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+public class CoutLogger implements Logger {
 
-import com.github.almightysatan.jo2sql.logger.CoutLogger;
-import com.github.almightysatan.jo2sql.logger.Logger;
+	@Override
+	public void debug(String message) {
+		System.out.println("[JO2SQL-debug] " + message);
+	}
 
-public class CommonTest {
+	@Override
+	public void info(String message) {
+		System.out.println("[JO2SQL-info] " + message);
+	}
 
-	static final Logger LOGGER = new CoutLogger();
-
-	public static void testApi(SqlProvider sql) throws AsyncDatabaseException {
-		TestObject object = new TestObject("Hello World", true, 420);
-		sql.prepareAiReplace(TestObject.class).object(object).queue();
-
-		TestObject deserialized = sql.prepareSelect(TestObject.class, "string").values(object.string).complete();
-
-		LOGGER.info("" + object.equals(deserialized));
-		assertEquals(object, deserialized);
+	@Override
+	public void error(String message) {
+		System.out.println("[JO2SQL-error] " + message);
 	}
 }

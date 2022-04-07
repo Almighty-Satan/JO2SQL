@@ -36,9 +36,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.almightysatan.jo2sql.AsyncDatabaseException;
 import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.DatabaseAction;
@@ -51,6 +48,7 @@ import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.datatypes.BoolDataType;
 import com.github.almightysatan.jo2sql.impl.datatypes.IntDataType;
 import com.github.almightysatan.jo2sql.impl.datatypes.LongDataType;
+import com.github.almightysatan.jo2sql.logger.Logger;
 
 public abstract class SqlProviderImpl implements SqlProvider {
 
@@ -59,11 +57,12 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	private final List<DataType> types;
 	private final ExecutorService exectuor = Executors.newSingleThreadExecutor();
-	private final Logger logger = LoggerFactory.getLogger("JO2SQL");
+	private final Logger logger;
 	private final Map<Class<?>, Table<?>> tables = new ConcurrentHashMap<>();
 	private Connection connection;
 
-	public SqlProviderImpl(List<DataType> types) {
+	public SqlProviderImpl(Logger logger, List<DataType> types) {
+		this.logger = logger;
 		types.addAll(DATA_TYPES);
 		this.types = types;
 	}
@@ -235,29 +234,29 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	public CachedStatement prepareStatement(String sql) throws SQLException {
-		this.logger.debug("Preparing statement {}", sql);
+		this.logger.debug("Preparing statement %s", sql);
 		return new CachedStatement(sql, (int) sql.chars().filter(c -> c == '?').count());
 	}
 
 	public int executeUpdate(CachedStatement cachedStatement) throws SQLException {
 		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this.getValidConnection());
-		this.logger.debug("Executing prepared update statement {}", statement.toString());
+		this.logger.debug("Executing prepared update statement %s", statement.toString());
 		return statement.executeUpdate();
 	}
 
 	public ResultSet executeQuery(CachedStatement cachedStatement) throws SQLException {
 		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this.getValidConnection());
-		this.logger.debug("Executing prepared query statement {}", statement.toString());
+		this.logger.debug("Executing prepared query statement %s", statement.toString());
 		return statement.executeQuery();
 	}
 
 	public int executeUpdate(String sql) throws SQLException {
-		this.logger.debug("Executing update statement {}", sql);
+		this.logger.debug("Executing update statement %s", sql);
 		return this.getValidConnection().createStatement().executeUpdate(sql);
 	}
 
 	public ResultSet executeQuery(String sql) throws SQLException {
-		this.logger.debug("Executing query statement {}", sql);
+		this.logger.debug("Executing query statement %s", sql);
 		return this.getValidConnection().createStatement().executeQuery(sql);
 	}
 

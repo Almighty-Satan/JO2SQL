@@ -31,6 +31,7 @@ import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class MysqlProviderImpl extends SqlProviderImpl {
 
@@ -41,8 +42,9 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	private final String password;
 	private final String schema;
 
-	public MysqlProviderImpl(List<DataType> types, String url, String user, String password, String schema) {
-		super(types = new ArrayList<>(types));
+	public MysqlProviderImpl(Logger logger, List<DataType> types, String url, String user, String password,
+			String schema) {
+		super(logger, types = new ArrayList<>(types));
 		types.add(STRING_DATA_TYPE);
 		this.url = url;
 		this.user = user;

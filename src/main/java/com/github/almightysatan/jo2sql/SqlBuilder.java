@@ -27,28 +27,40 @@ import java.util.List;
 
 import com.github.almightysatan.jo2sql.impl.mysql.MysqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.sqlite.SqliteProviderImpl;
+import com.github.almightysatan.jo2sql.logger.CoutLogger;
+import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class SqlBuilder {
-	
+
+	private static final Logger DEFAULT_LOGGER = new CoutLogger();
+
+	private Logger logger = DEFAULT_LOGGER;
 	private List<DataType> dataTypes = new ArrayList<>();
-	
-	public void addDataTypes(DataType... dataTypes) {
+
+	public SqlBuilder addDataTypes(DataType... dataTypes) {
 		this.dataTypes.addAll(Arrays.asList(dataTypes));
+		return this;
 	}
-	
-	public void addDataTypes(List<DataType> dataTypes) {
+
+	public SqlBuilder addDataTypes(List<DataType> dataTypes) {
 		this.dataTypes.addAll(dataTypes);
+		return this;
+	}
+
+	public SqlBuilder setLogger(Logger logger) {
+		this.logger = logger;
+		return this;
 	}
 
 	public SqlProvider mysql(String url, String user, String password, String schema) {
-		return new MysqlProviderImpl(this.dataTypes, url, user, password, schema);
+		return new MysqlProviderImpl(this.logger, this.dataTypes, url, user, password, schema);
 	}
 
 	public SqlProvider sqlite() {
-		return new SqliteProviderImpl(this.dataTypes);
+		return new SqliteProviderImpl(this.logger, this.dataTypes);
 	}
 
 	public SqlProvider sqlite(File file) {
-		return new SqliteProviderImpl(this.dataTypes, file);
+		return new SqliteProviderImpl(this.logger, this.dataTypes, file);
 	}
 }

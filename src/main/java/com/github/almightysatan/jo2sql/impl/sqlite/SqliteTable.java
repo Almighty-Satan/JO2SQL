@@ -44,7 +44,7 @@ public class SqliteTable<T extends SqlSerializable> extends Table<T> {
 				.executeQuery("SELECT * FROM sqlite_schema WHERE type='table' AND name = '" + this.name + "' LIMIT 1;")
 				.next()) {
 			// Table does not exist
-			this.provider.getLogger().info("Creating table {}", this.name);
+			this.provider.getLogger().info("Creating table %s", this.name);
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;

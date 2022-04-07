@@ -32,6 +32,7 @@ import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class SqliteProviderImpl extends SqlProviderImpl {
 
@@ -39,8 +40,8 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 
 	private final String path;
 
-	private SqliteProviderImpl(List<DataType> types, String path) {
-		super(types = new ArrayList<>(types));
+	private SqliteProviderImpl(Logger logger, List<DataType> types, String path) {
+		super(logger, types = new ArrayList<>(types));
 		types.add(STRING_DATA_TYPE);
 		this.path = path;
 
@@ -50,12 +51,12 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 		}).queue();
 	}
 
-	public SqliteProviderImpl(List<DataType> types) {
-		this(types, (String) null);
+	public SqliteProviderImpl(Logger logger, List<DataType> types) {
+		this(logger, types, (String) null);
 	}
 
-	public SqliteProviderImpl(List<DataType> types, File file) {
-		this(types, file.getAbsolutePath());
+	public SqliteProviderImpl(Logger logger, List<DataType> types, File file) {
+		this(logger, types, file.getAbsolutePath());
 	}
 
 	@Override
