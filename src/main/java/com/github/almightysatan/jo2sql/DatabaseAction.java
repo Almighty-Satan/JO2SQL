@@ -20,22 +20,42 @@
 
 package com.github.almightysatan.jo2sql;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 public interface DatabaseAction<T> {
 
-	T complete() throws AsyncDatabaseException;
+	Future<T> queue(ExecutorService callbackExecutor, Consumer<T> success, Consumer<Throwable> error);
 
-	T completeUsafe();
+	default Future<T> queue(ExecutorService callbackExecutor, Consumer<T> success) {
+		return this.queue(callbackExecutor, success, null);
+	}
 
-	void queue(ExecutorService callbackExecutor, Consumer<T> success, Consumer<Throwable> error);
+	default Future<T> queue(Consumer<T> success, Consumer<Throwable> error) {
+		return this.queue(null, success, error);
+	}
 
-	void queue(ExecutorService callbackExecutor, Consumer<T> success);
+	default Future<T> queue(Consumer<T> success) {
+		return this.queue(success, (Consumer<Throwable>) null);
+	}
 
-	void queue(Consumer<T> success, Consumer<Throwable> error);
+	default Future<T> queue() {
+		return this.queue((Consumer<T>) null);
+	}
 
-	void queue(Consumer<T> success);
+	default T complete() throws InterruptedException, ExecutionException {
+		return this.queue((Consumer<T>) null, (Consumer<Throwable>) throwable -> {
+			throw new RuntimeException(throwable);
+		}).get();
+	}
 
-	void queue();
+	default T completeUnsafe() {
+		try {
+			return this.complete();
+		} catch (InterruptedException | ExecutionException e) {
+			throw new RuntimeException("Async error", e);
+		}
+	}
 }

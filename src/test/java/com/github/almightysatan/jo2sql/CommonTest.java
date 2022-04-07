@@ -29,11 +29,11 @@ public class CommonTest {
 
 	static final Logger LOGGER = new CoutLogger();
 
-	public static void testApi(SqlProvider sql) throws AsyncDatabaseException {
+	public static void testApi(SqlProvider sql) {
 		TestObject object = new TestObject("Hello World", true, 420);
 		sql.prepareAiReplace(TestObject.class).object(object).queue();
 
-		TestObject deserialized = sql.prepareSelect(TestObject.class, "string").values(object.string).complete();
+		TestObject deserialized = sql.prepareSelect(TestObject.class, "string").values(object.string).completeUnsafe();
 
 		LOGGER.info("" + object.equals(deserialized));
 		assertEquals(object, deserialized);

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 public class MysqlTest {
 
-	public static void main(String[] args) throws AsyncDatabaseException {
+	public static void main(String[] args) {
 		try {
 			new MysqlTest().testApi();
 		} catch (Throwable t) {
@@ -35,7 +35,7 @@ public class MysqlTest {
 	}
 
 	@Test
-	public void testApi() throws AsyncDatabaseException {
+	public void testApi() {
 		if (System.getenv("mysqlUrl") == null) {
 			CommonTest.LOGGER.info("Skipped Mysql");
 			assertTrue(true);

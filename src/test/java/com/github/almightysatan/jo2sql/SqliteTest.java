@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 public class SqliteTest {
 
-	public static void main(String[] args) throws AsyncDatabaseException {
+	public static void main(String[] args) {
 		try {
 			new SqliteTest().testApi();
 		} catch (Throwable t) {
@@ -33,7 +33,7 @@ public class SqliteTest {
 	}
 
 	@Test
-	public void testApi() throws AsyncDatabaseException {
+	public void testApi() {
 		SqlProvider sql = new SqlBuilder().sqlite();
 
 		CommonTest.testApi(sql);

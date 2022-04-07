@@ -30,14 +30,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.github.almightysatan.jo2sql.AsyncDatabaseException;
 import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.DatabaseAction;
 import com.github.almightysatan.jo2sql.PreparedDelete;
@@ -159,77 +157,30 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	protected <T> DatabaseAction<T> createDatabaseAction(ThrowableSupplier<T> action) {
 		return new DatabaseAction<T>() {
-
 			@Override
-			public T complete() throws AsyncDatabaseException {
-				Future<T> future = SqlProviderImpl.this.executor.submit(() -> {
-					try {
-						return action.run();
-					} catch (Throwable e) {
-						throw new RuntimeException(e);
-					}
-				});
-				try {
-					return future.get();
-				} catch (InterruptedException | ExecutionException e) {
-					throw new AsyncDatabaseException(e);
-				}
-			}
-
-			@Override
-			public T completeUsafe() {
-				try {
-					return this.complete();
-				} catch (AsyncDatabaseException e) {
-					throw new Error("Async error", e);
-				}
-			}
-
-			@Override
-			public void queue(ExecutorService callbackExecutor, Consumer<T> success, Consumer<Throwable> error) {
-				SqlProviderImpl.this.executor.execute(() -> {
+			public Future<T> queue(ExecutorService callbackExecutor, Consumer<T> success, Consumer<Throwable> error) {
+				return SqlProviderImpl.this.executor.submit(() -> {
 					try {
 						T result = action.run();
-						if (success != null)
-							callbackExecutor.execute(() -> success.accept(result));
+						this.executeCallback(callbackExecutor, success, result);
+						return result;
 					} catch (Throwable t) {
 						if (error != null)
-							callbackExecutor.execute(() -> error.accept(t));
+							this.executeCallback(callbackExecutor, error, t);
 						else
 							SqlProviderImpl.this.logger.error("SQL error", t);
+						return null;
 					}
 				});
 			}
 
-			@Override
-			public void queue(ExecutorService callbackExecutor, Consumer<T> success) {
-				this.queue(callbackExecutor, success, null);
-			}
-
-			@Override
-			public void queue(Consumer<T> success, Consumer<Throwable> error) {
-				SqlProviderImpl.this.executor.execute(() -> {
-					try {
-						T result = action.run();
-						if (success != null)
-							success.accept(result);
-					} catch (Throwable t) {
-						if (error != null)
-							error.accept(t);
-						else
-							SqlProviderImpl.this.logger.error("SQL error", t);
-					}
-				});
-			}
-
-			@Override
-			public void queue(Consumer<T> success) {
-				this.queue(success, null);
-			}
-
-			@Override
-			public void queue() {
-				this.queue((Consumer<T>) null, null);
+			private <R> void executeCallback(ExecutorService executor, Consumer<R> callback, R result) {
+				if (callback != null) {
+					if (executor == null || executor == SqlProviderImpl.this.executor)
+						callback.accept(result);
+					else
+						executor.execute(() -> callback.accept(result));
+				}
 			}
 		};
 	}
