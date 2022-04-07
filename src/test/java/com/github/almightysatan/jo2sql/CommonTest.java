@@ -37,5 +37,7 @@ public class CommonTest {
 
 		LOGGER.info("" + object.equals(deserialized));
 		assertEquals(object, deserialized);
+
+		sql.terminate();
 	}
 }

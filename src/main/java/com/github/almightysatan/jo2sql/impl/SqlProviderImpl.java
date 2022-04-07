@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.github.almightysatan.jo2sql.AsyncDatabaseException;
@@ -56,7 +57,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 			new LongDataType());
 
 	private final List<DataType> types;
-	private final ExecutorService exectuor = Executors.newSingleThreadExecutor();
+	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 	private final Logger logger;
 	private final Map<Class<?>, Table<?>> tables = new ConcurrentHashMap<>();
 	private Connection connection;
@@ -161,7 +162,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 			@Override
 			public T complete() throws AsyncDatabaseException {
-				Future<T> future = SqlProviderImpl.this.exectuor.submit(() -> {
+				Future<T> future = SqlProviderImpl.this.executor.submit(() -> {
 					try {
 						return action.run();
 					} catch (Throwable e) {
@@ -186,7 +187,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 			@Override
 			public void queue(ExecutorService callbackExecutor, Consumer<T> success, Consumer<Throwable> error) {
-				SqlProviderImpl.this.exectuor.execute(() -> {
+				SqlProviderImpl.this.executor.execute(() -> {
 					try {
 						T result = action.run();
 						if (success != null)
@@ -207,7 +208,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 			@Override
 			public void queue(Consumer<T> success, Consumer<Throwable> error) {
-				SqlProviderImpl.this.exectuor.execute(() -> {
+				SqlProviderImpl.this.executor.execute(() -> {
 					try {
 						T result = action.run();
 						if (success != null)
@@ -258,6 +259,17 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	public ResultSet executeQuery(String sql) throws SQLException {
 		this.logger.debug("Executing query statement %s", sql);
 		return this.getValidConnection().createStatement().executeQuery(sql);
+	}
+
+	@Override
+	public void terminate() {
+		this.executor.shutdown();
+	}
+
+	@Override
+	public void terminate(long timeout, TimeUnit timeUnit) throws InterruptedException {
+		this.executor.shutdown();
+		this.executor.awaitTermination(timeout, timeUnit);
 	}
 
 	public Logger getLogger() {

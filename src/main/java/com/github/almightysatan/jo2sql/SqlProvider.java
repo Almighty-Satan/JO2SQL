@@ -20,6 +20,8 @@
 
 package com.github.almightysatan.jo2sql;
 
+import java.util.concurrent.TimeUnit;
+
 public interface SqlProvider {
 
 	<T extends SqlSerializable> DatabaseAction<Void> createIfNecessary(Class<T> type);
@@ -35,4 +37,8 @@ public interface SqlProvider {
 	<T extends SqlSerializable> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type);
 
 	<T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, String... keys);
+
+	void terminate();
+
+	void terminate(long timeout, TimeUnit timeUnit) throws InterruptedException;
 }
