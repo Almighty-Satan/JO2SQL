@@ -31,10 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.DatabaseAction;
 import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
@@ -49,7 +47,7 @@ public abstract class Table<T extends SqlSerializable> {
 	private final Constructor<T> constructor;
 	protected final String name;
 	protected final String fullName;
-	protected final Map<String, FieldColumn> columns = new LinkedHashMap<>();
+	protected final Map<String, AnnotatedField> fields = new LinkedHashMap<>();
 	protected final AbstractIndex primaryKey = new PrimaryKey();
 	private boolean created;
 
@@ -65,17 +63,18 @@ public abstract class Table<T extends SqlSerializable> {
 		for (Field field : type.getDeclaredFields()) {
 			Column annotation = field.getAnnotation(Column.class);
 			if (annotation != null) {
-				if (this.columns.containsKey(annotation.value()))
+				if (this.fields.containsKey(annotation.value()))
 					throw new Error(
 							String.format("Duplicate column name: %s in class %s", annotation.value(), type.getName()));
-				FieldColumn column = new FieldColumn(field, provider.getDataType(field.getType()), annotation);
+				AnnotatedField annotatedField = new AnnotatedField(field, provider.getDataType(field.getType()),
+						annotation);
 				if (annotation.primary())
-					this.primaryKey.indexColumns.add(column);
-				this.columns.put(annotation.value(), column);
+					this.primaryKey.indexFields.add(annotatedField);
+				this.fields.put(annotation.value(), annotatedField);
 			}
 		}
 
-		if (this.columns.size() == 0)
+		if (this.fields.size() == 0)
 			throw new Error("No columns found in class: " + type.getName());
 	}
 
@@ -144,16 +143,16 @@ public abstract class Table<T extends SqlSerializable> {
 	private String buildReplaceSql() {
 		StringBuilder replaceBuilder = new StringBuilder().append("REPLACE INTO ").append(this.fullName).append(" (`");
 		boolean first = true;
-		for (FieldColumn column : this.columns.values()) {
+		for (AnnotatedField field : this.fields.values()) {
 			if (first)
 				first = false;
 			else
 				replaceBuilder.append("`,`");
-			replaceBuilder.append(column.getName());
+			replaceBuilder.append(field.getName());
 		}
 
 		replaceBuilder.append("`) VALUES (");
-		for (int i = 0; i < this.columns.size(); i++) {
+		for (int i = 0; i < this.fields.size(); i++) {
 			if (i != 0)
 				replaceBuilder.append(",");
 			replaceBuilder.append("?");
@@ -164,8 +163,8 @@ public abstract class Table<T extends SqlSerializable> {
 	private void loadValues(CachedStatement statement, T object)
 			throws IllegalArgumentException, IllegalAccessException, SQLException {
 		int i = 0;
-		for (FieldColumn column : this.columns.values())
-			statement.setParameter(i++, column.getType(), column.getField().get(object));
+		for (AnnotatedField field : this.fields.values())
+			statement.setParameter(i++, field.getType(), field.getField().get(object));
 	}
 
 	PreparedSelect<T> prepareSingleSelect(String... keys) {
@@ -198,17 +197,17 @@ public abstract class Table<T extends SqlSerializable> {
 	}
 
 	private <X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, String... keys) {
-		FieldColumn[] columns = new FieldColumn[keys.length];
+		AnnotatedField[] fields = new AnnotatedField[keys.length];
 		StringBuilder builder = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ");
 		if (keys.length > 0) {
 			builder.append("WHERE");
 			int i = 0;
 			for (String key : keys)
-				if (this.columns.containsKey(key)) {
+				if (this.fields.containsKey(key)) {
 					if (i != 0)
 						builder.append(" AND ");
 					builder.append("`").append(key).append("`=?");
-					columns[i++] = this.columns.get(key);
+					fields[i++] = this.fields.get(key);
 				} else
 					throw new Error(String.format("Unknown key %s for table %s", key, this.name));
 		}
@@ -225,8 +224,8 @@ public abstract class Table<T extends SqlSerializable> {
 					if (this.statement == null)
 						this.statement = Table.this.provider.prepareStatement(sql);
 
-					for (int i = 0; i < columns.length; i++)
-						this.statement.setParameter(i, columns[i].getType(), values[i]);
+					for (int i = 0; i < fields.length; i++)
+						this.statement.setParameter(i, fields[i].getType(), values[i]);
 					ResultSet result = Table.this.provider.executeQuery(this.statement);
 					return resultInterpreter.apply(result);
 				});
@@ -237,27 +236,27 @@ public abstract class Table<T extends SqlSerializable> {
 	private T createObject(ResultSet result) throws IllegalArgumentException, IllegalAccessException, SQLException,
 			InstantiationException, InvocationTargetException {
 		T value = this.constructor.newInstance();
-		for (FieldColumn column : this.columns.values())
-			column.getField().set(value, column.getType().getValue(result, column.getName()));
+		for (AnnotatedField field : this.fields.values())
+			field.getField().set(value, field.getType().getValue(result, field.getName()));
 		return value;
 	}
 
 	PreparedObjectDelete<T> prepareObjectDelete() {
-		if (this.primaryKey.indexColumns.size() == 0)
+		if (this.primaryKey.indexFields.size() == 0)
 			throw new Error("Missing primary key in table " + this.getName());
 
-		FieldColumn[] columns = new FieldColumn[this.primaryKey.indexColumns.size()];
+		AnnotatedField[] fields = new AnnotatedField[this.primaryKey.indexFields.size()];
 		StringBuilder builder = new StringBuilder("DELETE FROM ").append(this.fullName);
 
 		builder.append("WHERE");
 		int i = 0;
-		for (FieldColumn column : this.primaryKey.indexColumns) {
-			String key = column.getName();
-			if (this.columns.containsKey(key)) {
+		for (AnnotatedField field : this.primaryKey.indexFields) {
+			String key = field.getName();
+			if (this.fields.containsKey(key)) {
 				if (i != 0)
 					builder.append(" AND ");
 				builder.append("`").append(key).append("`=?");
-				columns[i++] = this.columns.get(key);
+				fields[i++] = this.fields.get(key);
 			} else
 				throw new Error(String.format("Unknown key %s for table %s", key, this.name));
 		}
@@ -274,8 +273,8 @@ public abstract class Table<T extends SqlSerializable> {
 					if (this.statement == null)
 						this.statement = Table.this.provider.prepareStatement(sql);
 
-					for (int i = 0; i < columns.length; i++)
-						this.statement.setParameter(i, columns[i].getType(), columns[i].getField().get(object));
+					for (int i = 0; i < fields.length; i++)
+						this.statement.setParameter(i, fields[i].getType(), fields[i].getField().get(object));
 					Table.this.provider.executeUpdate(this.statement);
 					return null;
 				});
@@ -284,17 +283,17 @@ public abstract class Table<T extends SqlSerializable> {
 	}
 
 	PreparedDelete prepareDelete(String... keys) {
-		FieldColumn[] columns = new FieldColumn[keys.length];
+		AnnotatedField[] fields = new AnnotatedField[keys.length];
 		StringBuilder builder = new StringBuilder("DELETE FROM ").append(this.fullName);
 		if (keys.length > 0) {
 			builder.append("WHERE");
 			int i = 0;
 			for (String key : keys)
-				if (this.columns.containsKey(key)) {
+				if (this.fields.containsKey(key)) {
 					if (i != 0)
 						builder.append(" AND ");
 					builder.append("`").append(key).append("`=?");
-					columns[i++] = this.columns.get(key);
+					fields[i++] = this.fields.get(key);
 				} else
 					throw new Error(String.format("Unknown key %s for table %s", key, this.name));
 		}
@@ -311,8 +310,8 @@ public abstract class Table<T extends SqlSerializable> {
 					if (this.statement == null)
 						this.statement = Table.this.provider.prepareStatement(sql);
 
-					for (int i = 0; i < columns.length; i++)
-						this.statement.setParameter(i, columns[i].getType(), values[i]);
+					for (int i = 0; i < fields.length; i++)
+						this.statement.setParameter(i, fields[i].getType(), values[i]);
 					Table.this.provider.executeUpdate(this.statement);
 					return null;
 				});
@@ -326,81 +325,5 @@ public abstract class Table<T extends SqlSerializable> {
 
 	String getName() {
 		return this.name;
-	}
-
-	public abstract class AbstractIndex {
-
-		public List<FieldColumn> indexColumns = new ArrayList<>();
-
-		public abstract void appendIndex(StringBuilder builder, String delimiter);
-	}
-
-	private class Index extends AbstractIndex {
-
-		@Override
-		public void appendIndex(StringBuilder builder, String delimiter) {
-			// TODO Auto-generated method stub
-		}
-	}
-
-	private class PrimaryKey extends AbstractIndex {
-
-		@Override
-		public void appendIndex(StringBuilder builder, String delimiter) {
-			builder.append(delimiter).append("PRIMARY KEY (`")
-					.append(this.indexColumns.stream().map(FieldColumn::getName).collect(Collectors.joining("`,`")))
-					.append("`)");
-		}
-	}
-
-	public static class FieldColumn {
-
-		private Field field;
-		private DataType type;
-		private Column annotation;
-
-		private FieldColumn(Field field, DataType type, Column annotation) {
-			this.field = field;
-			this.annotation = annotation;
-
-			this.field.setAccessible(true);
-
-			this.type = type;
-		}
-
-		public void appendColumn(StringBuilder builder) {
-			builder.append("`").append(this.annotation.value()).append("` ")
-					.append(this.type.getDatatype(this.annotation.size()));
-
-			if (this.annotation.notNull())
-				builder.append(" NOT NULL");
-			else
-				builder.append(" NULL");
-
-			if (this.annotation.autoIncrement())
-				builder.append(" AUTO_INCREMENT");
-		}
-
-		public void appendIndex(StringBuilder builder, String delimiter) {
-			if (this.annotation.unique())
-				builder.append(delimiter).append("UNIQUE INDEX `").append(this.annotation.value()).append("_UNIQUE` (`")
-						.append(this.annotation.value()).append("` ASC) VISIBLE");
-
-			if (this.annotation.index())
-				builder.append(delimiter).append("INDEX `").append(this.annotation.value()).append("` (`")
-						.append(this.annotation.value()).append("` ASC) VISIBLE");
-		}
-
-		public String getName() {
-			return this.annotation.value();
-		}
-
-		private Field getField() {
-			return this.field;
-		}
-
-		private DataType getType() {
-			return this.type;
-		}
 	}
 }

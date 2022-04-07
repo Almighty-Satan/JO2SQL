@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.impl.AnnotatedField;
 import com.github.almightysatan.jo2sql.impl.CachedStatement;
 import com.github.almightysatan.jo2sql.impl.Table;
 
@@ -55,15 +56,15 @@ public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;
-			for (FieldColumn column : this.columns.values()) {
+			for (AnnotatedField field : this.fields.values()) {
 				if (first)
 					first = false;
 				else
 					statement.append(",");
-				column.appendColumn(statement);
-				column.appendIndex(statement, ",");
+				field.appendColumn(statement);
+				field.appendIndex(statement, ",");
 			}
-			if (!this.primaryKey.indexColumns.isEmpty())
+			if (!this.primaryKey.indexFields.isEmpty())
 				this.primaryKey.appendIndex(statement, ",");
 			statement.append(");");
 
@@ -76,17 +77,17 @@ public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 			checkRowStatement.setParameter(0, MysqlProviderImpl.STRING_DATA_TYPE, schema);
 			checkRowStatement.setParameter(1, MysqlProviderImpl.STRING_DATA_TYPE, this.name);
 
-			for (FieldColumn column : this.columns.values()) {
-				checkRowStatement.setParameter(2, MysqlProviderImpl.STRING_DATA_TYPE, column.getName());
+			for (AnnotatedField field : this.fields.values()) {
+				checkRowStatement.setParameter(2, MysqlProviderImpl.STRING_DATA_TYPE, field.getName());
 
 				if (!this.provider.executeQuery(checkRowStatement).next()) {
 					// Column does not exist
-					this.provider.getLogger().info("Adding column %s to tabel %s", column.getName(), this.name);
+					this.provider.getLogger().info("Adding column %s to tabel %s", field.getName(), this.name);
 
 					StringBuilder statement = new StringBuilder();
 					statement.append("ALTER TABLE `").append(schema).append("`.`").append(this.name).append("`")
 							.append(" ADD ");
-					column.appendColumn(statement);
+					field.appendColumn(statement);
 					// TODO properly implement this
 					// column.appendIndex(statement, ",ADD ");
 					// this.primaryKey.appendIndex(statement, ",ADD ");

@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.impl.AnnotatedField;
 import com.github.almightysatan.jo2sql.impl.Table;
 
 public class SqliteTable<T extends SqlSerializable> extends Table<T> {
@@ -48,15 +49,15 @@ public class SqliteTable<T extends SqlSerializable> extends Table<T> {
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;
-			for (FieldColumn column : this.columns.values()) {
+			for (AnnotatedField field : this.fields.values()) {
 				if (first)
 					first = false;
 				else
 					statement.append(",");
-				column.appendColumn(statement);
-				column.appendIndex(statement, ",");
+				field.appendColumn(statement);
+				field.appendIndex(statement, ",");
 			}
-			if (!this.primaryKey.indexColumns.isEmpty())
+			if (!this.primaryKey.indexFields.isEmpty())
 				this.primaryKey.appendIndex(statement, ",");
 			statement.append(");");
 
