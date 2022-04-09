@@ -18,20 +18,24 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.mysql;
+package com.github.almightysatan.jo2sql.impl.datatypes;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import com.github.almightysatan.jo2sql.impl.ColumnData;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.datatypes.StringDataType;
 
-public class MysqlStringDataType extends StringDataType {
+public interface DataType {
 
-	@Override
-	public ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> type, int size) {
-		if (size <= 0)
-			throw new Error("Invalid size: " + size);
+	abstract Class<?>[] getClasses();
 
-		return new ColumnData[] {
-				new ColumnData(null, "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'") };
-	}
+	abstract ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> type, int size);
+
+	abstract Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
+			throws SQLException, Throwable;
+
+	abstract void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
+			throws Throwable;
 }

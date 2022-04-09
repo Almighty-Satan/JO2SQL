@@ -26,17 +26,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.DatabaseAction;
 import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
@@ -46,25 +45,29 @@ import com.github.almightysatan.jo2sql.Selector;
 import com.github.almightysatan.jo2sql.SqlProvider;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.datatypes.BoolDataType;
+import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
 import com.github.almightysatan.jo2sql.impl.datatypes.IntDataType;
 import com.github.almightysatan.jo2sql.impl.datatypes.LongDataType;
+import com.github.almightysatan.jo2sql.impl.datatypes.SerializableDataType;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public abstract class SqlProviderImpl implements SqlProvider {
 
 	private static final List<DataType> DATA_TYPES = Arrays.asList(new BoolDataType(), new IntDataType(),
-			new LongDataType());
+			new LongDataType(), new SerializableDataType());
 
 	private final List<DataType> types;
 	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 	private final Logger logger;
-	private final Map<Class<?>, Table<?>> tables = new ConcurrentHashMap<>();
+	private final Map<Class<?>, Table<?>> tables = new HashMap<>();
 	private Connection connection;
+	private CachedStatement selectLastInsertIdStatement;
 
 	public SqlProviderImpl(Logger logger, List<DataType> types) {
 		this.logger = logger;
 		types.addAll(DATA_TYPES);
 		this.types = types;
+		this.selectLastInsertIdStatement = this.prepareStatement("SELECT " + this.getLastInsertIdFunc() + "();");
 	}
 
 	private Connection getValidConnection() throws SQLException {
@@ -84,19 +87,21 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	protected abstract Connection createConnection() throws SQLException;
 
+	protected abstract String getLastInsertIdFunc();
+
 	@SuppressWarnings("unchecked")
-	private <T extends SqlSerializable> Table<T> getTable(Class<T> type) {
+	public synchronized <T extends SqlSerializable> Table<T> getTable(Class<T> type) {
 		if (this.tables.containsKey(type))
 			return (Table<T>) this.tables.get(type);
 		else {
 			try {
-				Table<T> table = this.newTable(type);
+				Table<T> table = this.newTable(new SerializableClass<>(this, type));
 
 				Optional<Table<?>> duplicate = this.tables.values().stream()
-						.filter(t -> t.getName().equals(table.getName())).findAny();
+						.filter(t -> t.getType().getName().equals(table.getType().getName())).findAny();
 				if (duplicate.isPresent())
-					throw new Error(String.format("Duplicate table name in classes %s and %s",
-							table.getType().getName(), duplicate.get().getType().getName()));
+					throw new Error(String.format("Duplicate table name in %s and %s", type,
+							duplicate.get().getType().getType()));
 				this.tables.put(type, table);
 				return table;
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
@@ -106,22 +111,23 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		}
 	}
 
-	protected abstract <T extends SqlSerializable> Table<T> newTable(Class<T> type)
+	protected abstract <T extends SqlSerializable> Table<T> newTable(SerializableClass<T> type)
 			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException;
 
 	DataType getDataType(Class<?> type) {
 		for (DataType value : this.types)
 			for (Class<?> t : value.getClasses())
-				if (t == type)
+				if (t.isAssignableFrom(type))
 					return value;
 		throw new Error("Unsupported type: " + type.getName());
 	}
 
 	@Override
 	public <T extends SqlSerializable> DatabaseAction<Void> createIfNecessary(Class<T> type) {
+		Table<T> table = this.getTable(type);
 		return this.createDatabaseAction(() -> {
-			this.getTable(type).createIfNecessary();
+			table.createIfNecessary();
 			return null;
 		});
 	}
@@ -157,48 +163,26 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	protected <T> DatabaseAction<T> createDatabaseAction(ThrowableSupplier<T> action) {
-		return new DatabaseAction<T>() {
-			@Override
-			public Future<T> queue(ExecutorService callbackExecutor, Consumer<T> success, Consumer<Throwable> error) {
-				return SqlProviderImpl.this.executor.submit(() -> {
-					try {
-						T result = action.run();
-						this.executeCallback(callbackExecutor, success, result);
-						return result;
-					} catch (Throwable t) {
-						if (error != null)
-							this.executeCallback(callbackExecutor, error, t);
-						else
-							SqlProviderImpl.this.logger.error("SQL error", t);
-						return null;
-					}
-				});
-			}
-
-			private <R> void executeCallback(ExecutorService executor, Consumer<R> callback, R result) {
-				if (callback != null) {
-					if (executor == null || executor == SqlProviderImpl.this.executor)
-						callback.accept(result);
-					else
-						executor.execute(() -> callback.accept(result));
-				}
-			}
-		};
+		return new DatabaseActionImpl<>(action);
 	}
 
-	public CachedStatement prepareStatement(String sql) throws SQLException {
+	public <T> T runDatabaseAction(DatabaseAction<T> action) throws Throwable {
+		return ((DatabaseActionImpl<T>) action).action.run();
+	}
+
+	public CachedStatement prepareStatement(String sql) {
 		this.logger.debug("Preparing statement %s", sql);
 		return new CachedStatement(sql, (int) sql.chars().filter(c -> c == '?').count());
 	}
 
-	public int executeUpdate(CachedStatement cachedStatement) throws SQLException {
-		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this.getValidConnection());
+	public int executeUpdate(CachedStatement cachedStatement) throws Throwable {
+		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this, this.getValidConnection());
 		this.logger.debug("Executing prepared update statement %s", statement.toString());
 		return statement.executeUpdate();
 	}
 
-	public ResultSet executeQuery(CachedStatement cachedStatement) throws SQLException {
-		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this.getValidConnection());
+	public ResultSet executeQuery(CachedStatement cachedStatement) throws Throwable {
+		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this, this.getValidConnection());
 		this.logger.debug("Executing prepared query statement %s", statement.toString());
 		return statement.executeQuery();
 	}
@@ -226,5 +210,44 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	public Logger getLogger() {
 		return this.logger;
+	}
+
+	CachedStatement getSelectLastInsertIdStatement() {
+		return this.selectLastInsertIdStatement;
+	}
+
+	class DatabaseActionImpl<T> implements DatabaseAction<T> {
+
+		private ThrowableSupplier<T> action;
+
+		public DatabaseActionImpl(ThrowableSupplier<T> action) {
+			this.action = action;
+		}
+
+		@Override
+		public Future<T> queue(ExecutorService callbackExecutor, Consumer<T> success, Consumer<Throwable> error) {
+			return SqlProviderImpl.this.executor.submit(() -> {
+				try {
+					T result = this.action.run();
+					this.executeCallback(callbackExecutor, success, result);
+					return result;
+				} catch (Throwable t) {
+					if (error != null)
+						this.executeCallback(callbackExecutor, error, t);
+					else
+						SqlProviderImpl.this.logger.error("SQL error", t);
+					return null;
+				}
+			});
+		}
+
+		private <R> void executeCallback(ExecutorService executor, Consumer<R> callback, R result) {
+			if (callback != null) {
+				if (executor == null || executor == SqlProviderImpl.this.executor)
+					callback.accept(result);
+				else
+					executor.execute(() -> callback.accept(result));
+			}
+		}
 	}
 }

@@ -24,7 +24,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 
 public class BoolDataType implements DataType {
 
@@ -34,17 +35,19 @@ public class BoolDataType implements DataType {
 	}
 
 	@Override
-	public String getDatatype(int size) {
-		return "BOOL";
+	public ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> clazz, int size) {
+		return new ColumnData[] { new ColumnData(null, "BOOL") };
 	}
 
 	@Override
-	public Object getValue(ResultSet result, String label) throws SQLException {
+	public Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
+			throws SQLException {
 		return result.getBoolean(label);
 	}
 
 	@Override
-	public void setValue(PreparedStatement statement, int index, Object value) throws SQLException {
+	public void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
+			throws SQLException {
 		statement.setBoolean(index, (boolean) value);
 	}
 }

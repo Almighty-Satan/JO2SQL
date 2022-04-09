@@ -22,9 +22,8 @@ package com.github.almightysatan.jo2sql.impl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
 
 public class CachedStatement {
 
@@ -44,12 +43,14 @@ public class CachedStatement {
 		this.parameters[parameterIndex] = parameter;
 	}
 
-	public PreparedStatement getValidPreparedStatement(Connection connection) throws SQLException {
+	public PreparedStatement getValidPreparedStatement(SqlProviderImpl provider, Connection connection)
+			throws Throwable {
 		if (this.statement == null || this.statement.getConnection() != connection)
 			this.statement = connection.prepareStatement(this.sql);
 
 		for (int i = 0; i < this.parameterTypes.length; i++)
-			this.parameterTypes[i].setValue(this.statement, i + 1, this.parameters[i]);
+			if (this.parameterTypes[i] != null)
+				this.parameterTypes[i].setValue(provider, this.statement, i + 1, this.parameters[i]);
 
 		return this.statement;
 	}

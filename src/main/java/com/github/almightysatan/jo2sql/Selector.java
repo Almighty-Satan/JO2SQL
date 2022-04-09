@@ -94,7 +94,7 @@ public final class Selector {
 			StringBuilder stringBuilder = new StringBuilder().append("`").append(keys[0]).append("`")
 					.append(keyOperation).append("?");
 			for (int i = 1; i < keys.length; i++)
-				stringBuilder.append(logicOperator).append("`").append(keys[0]).append("`").append(keyOperation)
+				stringBuilder.append(logicOperator).append("`").append(keys[i]).append("`").append(keyOperation)
 						.append("?");
 			return new Selector(stringBuilder.toString(), keys);
 		}

@@ -29,6 +29,7 @@ public class MysqlTest {
 	public static void main(String[] args) {
 		try {
 			new MysqlTest().testApi();
+			new MysqlTest().testNestedObject();
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -43,8 +44,22 @@ public class MysqlTest {
 		}
 
 		SqlProvider sql = new SqlBuilder().mysql(System.getenv("mysqlUrl"), System.getenv("mysqlUser"),
-				System.getenv("mysqlPassword"), "test");
+				System.getenv("mysqlPassword"), "jo2sqlTest");
 
 		CommonTest.testApi(sql);
+	}
+
+	@Test
+	public void testNestedObject() {
+		if (System.getenv("mysqlUrl") == null) {
+			CommonTest.LOGGER.info("Skipped Mysql");
+			assertTrue(true);
+			return;
+		}
+
+		SqlProvider sql = new SqlBuilder().mysql(System.getenv("mysqlUrl"), System.getenv("mysqlUser"),
+				System.getenv("mysqlPassword"), "jo2sqlTest");
+
+		CommonTest.testNestedObject(sql);
 	}
 }

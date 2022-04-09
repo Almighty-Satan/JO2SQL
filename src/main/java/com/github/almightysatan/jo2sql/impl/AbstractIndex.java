@@ -20,12 +20,13 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class AbstractIndex {
 
-	public List<AnnotatedField> indexFields = new ArrayList<>();
+	public AnnotatedField[] indexFields;
+
+	public AbstractIndex(AnnotatedField... indexFields) {
+		this.indexFields = indexFields;
+	}
 
 	public abstract void appendIndex(StringBuilder builder, String delimiter);
 }

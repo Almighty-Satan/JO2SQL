@@ -28,10 +28,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class SqliteProviderImpl extends SqlProviderImpl {
@@ -44,11 +44,6 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 		super(logger, types = new ArrayList<>(types));
 		types.add(STRING_DATA_TYPE);
 		this.path = path;
-
-		this.createDatabaseAction(() -> {
-			this.executeUpdate("PRAGMA encoding = 'UTF-8';");
-			return null;
-		}).queue();
 	}
 
 	public SqliteProviderImpl(Logger logger, List<DataType> types) {

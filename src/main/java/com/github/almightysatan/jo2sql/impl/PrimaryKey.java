@@ -20,14 +20,26 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import com.github.almightysatan.jo2sql.Selector;
+
 public class PrimaryKey extends AbstractIndex {
+
+	private Selector selector;
 
 	@Override
 	public void appendIndex(StringBuilder builder, String delimiter) {
 		builder.append(delimiter).append("PRIMARY KEY (`")
-				.append(this.indexFields.stream().map(AnnotatedField::getName).collect(Collectors.joining("`,`")))
+				.append(Arrays.stream(this.indexFields).map(AnnotatedField::getName).collect(Collectors.joining("`,`")))
 				.append("`)");
+	}
+
+	public Selector getSelector() {
+		if (this.selector == null)
+			this.selector = Selector
+					.eqAnd(Arrays.stream(this.indexFields).map(AnnotatedField::getName).toArray(String[]::new));
+		return this.selector;
 	}
 }

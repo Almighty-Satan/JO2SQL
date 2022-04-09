@@ -27,10 +27,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.impl.SerializableClass;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class MysqlProviderImpl extends SqlProviderImpl {
@@ -59,7 +60,12 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	}
 
 	@Override
-	protected <T extends SqlSerializable> Table<T> newTable(Class<T> type)
+	protected String getLastInsertIdFunc() {
+		return "LAST_INSERT_ID";
+	}
+
+	@Override
+	protected <T extends SqlSerializable> Table<T> newTable(SerializableClass<T> type)
 			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException {
 		return new MysqlTable<>(this, type);

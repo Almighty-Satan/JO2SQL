@@ -41,4 +41,21 @@ public class CommonTest {
 
 		sql.terminate();
 	}
+
+	public static void testNestedObject(SqlProvider sql) {
+		ChildChildObject childChild = new ChildChildObject("Massive", "Asshole", 12345);
+		ChildObject child = new ChildObject("Little", "Prick", 69, childChild);
+		ParentObject parent = new ParentObject(child);
+
+		long id = sql.prepareAiReplace(ParentObject.class).object(parent).completeUnsafe();
+		parent.id = id;
+
+		ParentObject deserialized = sql.prepareSelect(ParentObject.class, Selector.eq("id")).values(id)
+				.completeUnsafe();
+
+		LOGGER.info("" + parent.equals(deserialized));
+		assertEquals(parent, deserialized);
+
+		sql.terminate();
+	}
 }

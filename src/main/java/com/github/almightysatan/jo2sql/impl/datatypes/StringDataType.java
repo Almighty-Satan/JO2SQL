@@ -24,7 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 
 public abstract class StringDataType implements DataType {
 
@@ -34,12 +34,14 @@ public abstract class StringDataType implements DataType {
 	}
 
 	@Override
-	public Object getValue(ResultSet result, String label) throws SQLException {
+	public Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
+			throws SQLException {
 		return result.getString(label);
 	}
 
 	@Override
-	public void setValue(PreparedStatement statement, int index, Object value) throws SQLException {
+	public void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
+			throws SQLException {
 		statement.setString(index, (String) value);
 	}
 

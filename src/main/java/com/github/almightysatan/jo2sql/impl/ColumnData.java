@@ -18,19 +18,33 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql;
+package com.github.almightysatan.jo2sql.impl;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+public class ColumnData {
 
-public interface DataType {
+	String name;
+	String sqlType;
+	String processedName;
+	String sqlStatement;
 
-	abstract Class<?>[] getClasses();
+	public ColumnData(String name, String sqlType) {
+		this.name = name;
+		this.sqlType = sqlType;
+	}
 
-	abstract String getDatatype(int size);
+	public String getName() {
+		return this.name;
+	}
 
-	abstract Object getValue(ResultSet result, String label) throws SQLException;
+	public String getSqlType() {
+		return this.sqlType;
+	}
 
-	abstract void setValue(PreparedStatement statement, int index, Object value) throws SQLException;
+	public String getProcessedName() {
+		return this.processedName;
+	}
+
+	public String getSqlStatement() {
+		return this.sqlStatement;
+	}
 }

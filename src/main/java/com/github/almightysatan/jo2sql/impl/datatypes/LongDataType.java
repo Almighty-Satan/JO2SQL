@@ -24,7 +24,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 
 public class LongDataType implements DataType {
 
@@ -34,17 +35,19 @@ public class LongDataType implements DataType {
 	}
 
 	@Override
-	public String getDatatype(int size) {
-		return "BIGINT";
+	public ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> clazz, int size) {
+		return new ColumnData[] { new ColumnData(null, "BIGINT") };
 	}
 
 	@Override
-	public Object getValue(ResultSet result, String label) throws SQLException {
+	public Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
+			throws SQLException {
 		return result.getLong(label);
 	}
 
 	@Override
-	public void setValue(PreparedStatement statement, int index, Object value) throws SQLException {
+	public void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
+			throws SQLException {
 		statement.setLong(index, (long) value);
 	}
 }

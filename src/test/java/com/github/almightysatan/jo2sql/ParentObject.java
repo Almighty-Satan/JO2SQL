@@ -18,36 +18,48 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.datatypes;
+package com.github.almightysatan.jo2sql;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.Objects;
 
-import com.github.almightysatan.jo2sql.impl.ColumnData;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+public class ParentObject implements SqlSerializable {
 
-public class IntDataType implements DataType {
+	@Column(value = "id", primary = true, autoIncrement = true)
+	public long id;
+	@Column(value = "child")
+	public ChildObject child;
 
-	@Override
-	public Class<?>[] getClasses() {
-		return new Class[] { int.class, Integer.class };
+	public ParentObject() {
+	}
+
+	public ParentObject(ChildObject child) {
+		this.child = child;
 	}
 
 	@Override
-	public ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> clazz, int size) {
-		return new ColumnData[] { new ColumnData(null, "INT") };
+	public int hashCode() {
+		return Objects.hash(this.child, this.id);
 	}
 
 	@Override
-	public Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
-			throws SQLException {
-		return result.getInt(label);
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (this.getClass() != obj.getClass())
+			return false;
+		ParentObject other = (ParentObject) obj;
+		return Objects.equals(this.child, other.child) && this.id == other.id;
 	}
 
 	@Override
-	public void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
-			throws SQLException {
-		statement.setInt(index, (int) value);
+	public String toString() {
+		return "ParentObject [integer=" + this.id + ", child=" + this.child + "]";
+	}
+
+	@Override
+	public String getTableName() {
+		return "ParentObject";
 	}
 }

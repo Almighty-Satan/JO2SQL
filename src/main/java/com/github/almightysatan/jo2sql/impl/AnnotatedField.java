@@ -23,34 +23,62 @@ package com.github.almightysatan.jo2sql.impl;
 import java.lang.reflect.Field;
 
 import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
 
 public class AnnotatedField {
 
-	private Field field;
-	private DataType type;
-	private Column annotation;
+	public static final char INTERNAL_COLUMN_DELIMITER = '#';
 
-	AnnotatedField(Field field, DataType type, Column annotation) {
+	private final Field field;
+	private final DataType type;
+	private final Column annotation;
+	private final ColumnData[] columnData;
+
+	AnnotatedField(SqlProviderImpl provider, Field field, Column annotation) {
 		this.field = field;
-		this.annotation = annotation;
-
 		this.field.setAccessible(true);
-
-		this.type = type;
+		this.annotation = annotation;
+		this.type = provider.getDataType(field.getType());
+		this.columnData = this.createColumnData(provider);
 	}
 
-	public void appendColumn(StringBuilder builder) {
-		builder.append("`").append(this.annotation.value()).append("` ")
-				.append(this.type.getDatatype(this.annotation.size()));
+	private ColumnData[] createColumnData(SqlProviderImpl provider) {
+		ColumnData[] columns = this.type.getColumnData(provider, this.field.getType(), this.annotation.size());
+		for (ColumnData data : columns) {
+			data.processedName = data.name == null ? this.annotation.value()
+					: this.annotation.value() + INTERNAL_COLUMN_DELIMITER + data.name;
 
-		if (this.annotation.notNull())
-			builder.append(" NOT NULL");
-		else
-			builder.append(" NULL");
+			StringBuilder builder = new StringBuilder();
 
-		if (this.annotation.autoIncrement())
-			builder.append(" AUTO_INCREMENT");
+			builder.append("`").append(data.processedName).append("` ").append(data.sqlType);
+
+			if (this.annotation.notNull())
+				builder.append(" NOT NULL");
+			else
+				builder.append(" NULL");
+
+			if (this.annotation.autoIncrement())
+				builder.append(" AUTO_INCREMENT");
+
+			data.sqlStatement = builder.toString();
+		}
+		return columns;
+	}
+
+	public String getName() {
+		return this.annotation.value();
+	}
+
+	public Field getField() {
+		return this.field;
+	}
+
+	public DataType getType() {
+		return this.type;
+	}
+
+	public ColumnData[] getColumnData() {
+		return this.columnData;
 	}
 
 	public void appendIndex(StringBuilder builder, String delimiter) {
@@ -61,17 +89,5 @@ public class AnnotatedField {
 		if (this.annotation.index())
 			builder.append(delimiter).append("INDEX `").append(this.annotation.value()).append("` (`")
 					.append(this.annotation.value()).append("` ASC) VISIBLE");
-	}
-
-	public String getName() {
-		return this.annotation.value();
-	}
-
-	Field getField() {
-		return this.field;
-	}
-
-	DataType getType() {
-		return this.type;
 	}
 }

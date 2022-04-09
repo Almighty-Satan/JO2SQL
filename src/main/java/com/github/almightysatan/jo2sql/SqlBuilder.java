@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
 import com.github.almightysatan.jo2sql.impl.mysql.MysqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.sqlite.SqliteProviderImpl;
 import com.github.almightysatan.jo2sql.logger.CoutLogger;

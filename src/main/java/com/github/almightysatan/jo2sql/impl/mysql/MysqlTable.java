@@ -21,51 +21,48 @@
 package com.github.almightysatan.jo2sql.impl.mysql;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
 
 import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.AnnotatedField;
 import com.github.almightysatan.jo2sql.impl.CachedStatement;
+import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.impl.SerializableClass;
 import com.github.almightysatan.jo2sql.impl.Table;
 
 public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 
-	MysqlTable(MysqlProviderImpl provider, Class<T> type) throws NoSuchMethodException, SecurityException,
+	MysqlTable(MysqlProviderImpl provider, SerializableClass<T> type) throws NoSuchMethodException, SecurityException,
 			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		super(provider, type);
 	}
 
 	@Override
 	protected String getFullName(String name) {
-		return "`" + ((MysqlProviderImpl) this.provider).getSchema() + "`.`" + this.name + "`";
+		return "`" + ((MysqlProviderImpl) this.provider).getSchema() + "`.`" + this.getType().getName() + "`";
 	}
 
 	@Override
-	protected String getLastInsertIdFunc() {
-		return "LAST_INSERT_ID";
-	}
-
-	@Override
-	protected void check() throws SQLException {
+	protected void check() throws Throwable {
 		String schema = ((MysqlProviderImpl) this.provider).getSchema();
 
 		if (!this.provider.executeQuery("SELECT * FROM information_schema.tables WHERE table_schema = '" + schema
-				+ "' AND table_name = '" + this.name + "' LIMIT 1;").next()) {
+				+ "' AND table_name = '" + this.type.getName() + "' LIMIT 1;").next()) {
 			// Table does not exist
-			this.provider.getLogger().info("Creating table %s", this.name);
+			this.provider.getLogger().info("Creating table %s", this.getFullName());
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;
-			for (AnnotatedField field : this.fields.values()) {
-				if (first)
-					first = false;
-				else
-					statement.append(",");
-				field.appendColumn(statement);
+			for (AnnotatedField field : this.getType().getFields().values()) {
+				for (ColumnData column : field.getColumnData()) {
+					if (first)
+						first = false;
+					else
+						statement.append(",");
+					statement.append(column.getSqlStatement());
+				}
 				field.appendIndex(statement, ",");
 			}
-			if (!this.primaryKey.indexFields.isEmpty())
-				this.primaryKey.appendIndex(statement, ",");
+			this.getType().getPrimaryKey().appendIndex(statement, ",");
 			statement.append(");");
 
 			this.provider.executeUpdate(statement.toString());
@@ -75,27 +72,26 @@ public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 					"SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1;");
 
 			checkRowStatement.setParameter(0, MysqlProviderImpl.STRING_DATA_TYPE, schema);
-			checkRowStatement.setParameter(1, MysqlProviderImpl.STRING_DATA_TYPE, this.name);
+			checkRowStatement.setParameter(1, MysqlProviderImpl.STRING_DATA_TYPE, this.getType().getName());
 
-			for (AnnotatedField field : this.fields.values()) {
-				checkRowStatement.setParameter(2, MysqlProviderImpl.STRING_DATA_TYPE, field.getName());
+			StringBuilder alterStatement = new StringBuilder().append("ALTER TABLE `").append(this.getFullName())
+					.append("`");
+			for (AnnotatedField field : this.getType().getFields().values()) {
+				for (ColumnData column : field.getColumnData()) {
+					checkRowStatement.setParameter(2, MysqlProviderImpl.STRING_DATA_TYPE, column.getProcessedName());
 
-				if (!this.provider.executeQuery(checkRowStatement).next()) {
-					// Column does not exist
-					this.provider.getLogger().info("Adding column %s to tabel %s", field.getName(), this.name);
+					if (!this.provider.executeQuery(checkRowStatement).next()) {
+						// Column does not exist
+						this.provider.getLogger().info("Adding column %s to tabel %s", column.getProcessedName(),
+								this.getFullName());
 
-					StringBuilder statement = new StringBuilder();
-					statement.append("ALTER TABLE `").append(schema).append("`.`").append(this.name).append("`")
-							.append(" ADD ");
-					field.appendColumn(statement);
-					// TODO properly implement this
-					// column.appendIndex(statement, ",ADD ");
-					// this.primaryKey.appendIndex(statement, ",ADD ");
-					statement.append(";");
+						alterStatement.append(" ADD COLUMN ").append(column.getSqlStatement());
 
-					this.provider.executeUpdate(statement.toString());
+						this.provider.executeUpdate(alterStatement.toString());
+					}
 				}
 			}
+			alterStatement.append(";");
 		}
 	}
 }
