@@ -22,14 +22,22 @@ package com.github.almightysatan.jo2sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import com.github.almightysatan.jo2sql.logger.CoutLogger;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
-public class CommonTest {
+public class ApiTest {
 
 	static final Logger LOGGER = new CoutLogger();
 
-	public static void testApi(SqlProvider sql) {
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testReplaceSelect(SqlProvider sql) {
 		TestObject object = new TestObject("Hello World", true, 420);
 		sql.prepareAiReplace(TestObject.class).object(object).queue();
 
@@ -42,7 +50,9 @@ public class CommonTest {
 		sql.terminate();
 	}
 
-	public static void testNestedObject(SqlProvider sql) {
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNestedObject(SqlProvider sql) {
 		ChildChildObject childChild = new ChildChildObject("Massive", "Asshole", 12345);
 		ChildObject child = new ChildObject("Little", "Prick", 69, childChild);
 		ParentObject parent = new ParentObject(child);
@@ -57,5 +67,14 @@ public class CommonTest {
 		assertEquals(parent, deserialized);
 
 		sql.terminate();
+	}
+
+	private static Stream<Arguments> getSqlProviders() {
+		if (System.getenv("mysqlUrl") == null)
+			return Stream.of(Arguments.of(new SqlBuilder().sqlite()));
+		else
+			return Stream.of(Arguments.of(new SqlBuilder().sqlite()),
+					Arguments.of(new SqlBuilder().mysql(System.getenv("mysqlUrl"), System.getenv("mysqlUser"),
+							System.getenv("mysqlPassword"), "jo2sqlTest")));
 	}
 }
