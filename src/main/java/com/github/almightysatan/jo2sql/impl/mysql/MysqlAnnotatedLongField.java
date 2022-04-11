@@ -18,28 +18,25 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl.mysql;
 
-public class ColumnData {
+import java.lang.reflect.Field;
 
-	String name;
-	private String sqlType;
-	String sqlStatement;
+import com.github.almightysatan.jo2sql.Column;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedLongField;
 
-	ColumnData(String name, String sqlType) {
-		this.name = name;
-		this.sqlType = sqlType;
+class MysqlAnnotatedLongField extends AnnotatedLongField {
+
+	MysqlAnnotatedLongField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+		super(provider, field, annotation);
 	}
 
-	public String getName() {
-		return this.name;
-	}
-
-	public String getSqlType() {
-		return this.sqlType;
-	}
-
-	public String getSqlStatement() {
-		return this.sqlStatement;
+	@Override
+	protected StringBuilder appendAnnotationProperties(StringBuilder stringBuilder) {
+		super.appendAnnotationProperties(stringBuilder);
+		if (this.getColumnAnnotation().autoIncrement())
+			stringBuilder.append(" AUTO_INCREMENT");
+		return stringBuilder;
 	}
 }

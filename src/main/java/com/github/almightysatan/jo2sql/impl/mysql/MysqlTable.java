@@ -57,7 +57,7 @@ public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 						first = false;
 					else
 						statement.append(",");
-					statement.append("`").append(column.getName()).append("`").append(column.getSql());
+					statement.append("`").append(column.getName()).append("`").append(column.getSqlStatement());
 				}
 				field.appendIndex(statement, ",");
 			}

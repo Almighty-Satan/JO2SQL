@@ -51,7 +51,8 @@ public abstract class AnnotatedField {
 	private ColumnData[] createColumnData() throws Throwable {
 		ColumnData[] columns = this.loadColumns();
 		for (ColumnData data : columns)
-			data.sql = this.appendAnnotationProperties(new StringBuilder().append(data.sql)).toString();
+			data.sqlStatement = this.appendAnnotationProperties(new StringBuilder().append(data.getSqlType()))
+					.toString();
 		return columns;
 	}
 
@@ -65,14 +66,11 @@ public abstract class AnnotatedField {
 	 */
 	protected abstract ColumnData[] loadColumns() throws Throwable;
 
-	private StringBuilder appendAnnotationProperties(StringBuilder stringBuilder) {
+	protected StringBuilder appendAnnotationProperties(StringBuilder stringBuilder) {
 		if (this.columnAnnotation.notNull())
 			stringBuilder.append(" NOT NULL");
 		else
 			stringBuilder.append(" NULL");
-
-		if (this.columnAnnotation.autoIncrement())
-			stringBuilder.append(" AUTO_INCREMENT");
 
 		return stringBuilder;
 	}

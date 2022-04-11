@@ -49,7 +49,6 @@ import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.fields.AnnotatedBoolField;
 import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
 import com.github.almightysatan.jo2sql.impl.fields.AnnotatedIntField;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedLongField;
 import com.github.almightysatan.jo2sql.impl.fields.AnnotatedSerializableField;
 import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
 import com.github.almightysatan.jo2sql.impl.fields.SimpleFieldSupplier;
@@ -59,8 +58,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	private static final List<FieldSupplier> DATA_TYPES = Arrays.asList(
 			new SimpleFieldSupplier(AnnotatedBoolField::new, boolean.class, Boolean.class),
-			new SimpleFieldSupplier(AnnotatedIntField::new, int.class, Integer.class),
-			new SimpleFieldSupplier(AnnotatedLongField::new, long.class, Long.class), new FieldSupplier() {
+			new SimpleFieldSupplier(AnnotatedIntField::new, int.class, Integer.class), new FieldSupplier() {
 
 				@Override
 				public boolean isType(Field field) {

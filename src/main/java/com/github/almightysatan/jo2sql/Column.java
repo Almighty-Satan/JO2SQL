@@ -48,7 +48,8 @@ public @interface Column {
 	/**
 	 * Whether the value of this column should be automatically set to a unique
 	 * value when 0. This is ignored if the type of the field is anything other than
-	 * long or {@link Long}
+	 * long or {@link Long}. When enabled this column is automatically set as the
+	 * only column in the Primary Key
 	 * 
 	 * @return True if the value should be incremented automatically, false
 	 *         otherwise (Default: false)

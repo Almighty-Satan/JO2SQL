@@ -18,33 +18,32 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl.sqlite;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.Types;
 
 import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedLongField;
 
-public abstract class AnnotatedLongField extends SimpleAnnotatedField {
+class SqliteAnnotatedLongField extends AnnotatedLongField {
 
-	public AnnotatedLongField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+	SqliteAnnotatedLongField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
 		super(provider, field, annotation);
 	}
 
 	@Override
 	protected String loadColumn() {
-		return "BIGINT";
+		return this.getColumnAnnotation().autoIncrement() ? "INTEGER" : super.getColumnName();
 	}
 
 	@Override
 	public void setValues(PreparedStatement statement, int index, Object value) throws Throwable {
-		statement.setLong(index, value == null ? 0L : (long) value);
-	}
-
-	@Override
-	public Object loadValue(String prefix, ResultSet result) throws Throwable {
-		return result.getLong(prefix + this.getColumnName());
+		if (this.getColumnAnnotation().autoIncrement() && (value == null || (long) value == 0))
+			statement.setNull(index, Types.INTEGER);
+		else
+			super.setValues(statement, index, value);
 	}
 }

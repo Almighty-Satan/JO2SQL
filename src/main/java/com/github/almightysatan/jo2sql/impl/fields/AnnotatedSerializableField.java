@@ -56,7 +56,7 @@ public class AnnotatedSerializableField extends AnnotatedField {
 		for (AnnotatedField field : this.table.getType().getPrimaryKey().indexFields) {
 			ColumnData data = field.getColumnData()[0];
 			dataArray[i++] = new ColumnData(this.getColumnName() + INTERNAL_COLUMN_DELIMITER + data.getName(),
-					data.getSql());
+					data.getSqlType());
 		}
 
 		return dataArray;

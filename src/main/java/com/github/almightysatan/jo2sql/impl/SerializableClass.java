@@ -40,6 +40,7 @@ public class SerializableClass<T extends SqlSerializable> {
 	private final String name;
 	private final Map<String, AnnotatedField> fields = new HashMap<>();
 	private final PrimaryKey primaryKey = new PrimaryKey();
+	private AnnotatedField aiField;
 
 	public SerializableClass(SqlProviderImpl provider, Class<T> type) throws Throwable {
 		this.type = type;
@@ -55,6 +56,10 @@ public class SerializableClass<T extends SqlSerializable> {
 
 		if ((this.primaryKey.indexFields = primaryFields.toArray(new AnnotatedField[primaryFields.size()])).length == 0)
 			throw new Error("Missing primary key in table " + this.getName());
+
+		if (this.aiField != null && this.primaryKey.indexFields.length > 1)
+			throw new Error(String.format("Multiple columns in Primary Key while using Auto Increment in class %s",
+					this.type.getName()));
 	}
 
 	private void loadFields(SqlProviderImpl provider, List<AnnotatedField> primaryFields, Class<?> clazz)
@@ -63,8 +68,16 @@ public class SerializableClass<T extends SqlSerializable> {
 			Column annotation = field.getAnnotation(Column.class);
 			if (annotation != null && !Modifier.isStatic(field.getModifiers())) {
 				AnnotatedField annotatedField = provider.createAnnotatedField(field, annotation);
-				if (annotation.primary())
+				if (annotation.primary() || annotation.autoIncrement())
 					primaryFields.add(annotatedField);
+
+				if (annotation.autoIncrement()) {
+					if (this.aiField == null)
+						this.aiField = annotatedField;
+					else
+						throw new Error(
+								String.format("Multiple Auto Increment columns in class %s", this.type.getName()));
+				}
 
 				if (this.fields.put(annotation.value(), annotatedField) != null)
 					throw new Error(String.format("Duplicate column name: %s in class %s", annotation.value(),

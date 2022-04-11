@@ -36,10 +36,13 @@ import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
 import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
 import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
+import com.github.almightysatan.jo2sql.impl.fields.SimpleFieldSupplier;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class SqliteProviderImpl extends SqlProviderImpl {
 
+	static final FieldSupplier LONG_FIELD_PROVIDER = new SimpleFieldSupplier(SqliteAnnotatedLongField::new, long.class,
+			Long.class);
 	static final FieldSupplier STRING_FIELD_PROVIDER = new FieldSupplier() {
 
 		@Override
@@ -57,6 +60,7 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 
 	private SqliteProviderImpl(Logger logger, List<FieldSupplier> types, String path) {
 		super(logger, types = new ArrayList<>(types));
+		types.add(LONG_FIELD_PROVIDER);
 		types.add(STRING_FIELD_PROVIDER);
 		this.path = path;
 	}

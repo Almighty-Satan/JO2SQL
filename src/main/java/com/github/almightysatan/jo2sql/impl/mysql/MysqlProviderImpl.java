@@ -35,10 +35,13 @@ import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
 import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
 import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
+import com.github.almightysatan.jo2sql.impl.fields.SimpleFieldSupplier;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class MysqlProviderImpl extends SqlProviderImpl {
 
+	static final FieldSupplier LONG_FIELD_PROVIDER = new SimpleFieldSupplier(MysqlAnnotatedLongField::new, long.class,
+			Long.class);
 	static final FieldSupplier STRING_FIELD_PROVIDER = new FieldSupplier() {
 
 		@Override
@@ -60,6 +63,7 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	public MysqlProviderImpl(Logger logger, List<FieldSupplier> types, String url, String user, String password,
 			String schema) {
 		super(logger, types = new ArrayList<>(types));
+		types.add(LONG_FIELD_PROVIDER);
 		types.add(STRING_FIELD_PROVIDER);
 		this.url = url;
 		this.user = user;
