@@ -20,6 +20,8 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+
 public abstract class AbstractIndex {
 
 	public AnnotatedField[] indexFields;

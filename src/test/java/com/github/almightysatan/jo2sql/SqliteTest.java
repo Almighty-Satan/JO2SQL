@@ -18,19 +18,14 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.sqlite;
+package com.github.almightysatan.jo2sql;
 
-import com.github.almightysatan.jo2sql.impl.SerializableClass;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.datatypes.StringDataType;
+import java.util.function.BiConsumer;
 
-public class SqliteStringDataType extends StringDataType {
+public class SqliteTest {
 
-	@Override
-	public String getSqlDataType(SqlProviderImpl provider, SerializableClass<?> serializableClass, int size) {
-		if (size <= 0)
-			throw new Error("Invalid size: " + size);
-
-		return "VARCHAR(" + size + ")";
+	public static void main(String[] args) {
+		for (BiConsumer<ApiTest, SqlProvider> test : ApiTest.tests)
+			test.accept(new ApiTest(), new SqlBuilder().sqlite());
 	}
 }

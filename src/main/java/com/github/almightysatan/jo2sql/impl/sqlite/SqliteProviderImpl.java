@@ -21,6 +21,7 @@
 package com.github.almightysatan.jo2sql.impl.sqlite;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,29 +29,43 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.impl.SerializableClass;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
-import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class SqliteProviderImpl extends SqlProviderImpl {
 
-	static final DataType STRING_DATA_TYPE = new SqliteStringDataType();
+	static final FieldSupplier STRING_FIELD_PROVIDER = new FieldSupplier() {
+
+		@Override
+		public boolean isType(Field field) {
+			return field.getType() == String.class;
+		}
+
+		@Override
+		public AnnotatedField createField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+			return new SqliteAnnotatedStringField(provider, field, annotation);
+		}
+	};
 
 	private final String path;
 
-	private SqliteProviderImpl(Logger logger, List<DataType> types, String path) {
+	private SqliteProviderImpl(Logger logger, List<FieldSupplier> types, String path) {
 		super(logger, types = new ArrayList<>(types));
-		types.add(STRING_DATA_TYPE);
+		types.add(STRING_FIELD_PROVIDER);
 		this.path = path;
 	}
 
-	public SqliteProviderImpl(Logger logger, List<DataType> types) {
+	public SqliteProviderImpl(Logger logger, List<FieldSupplier> types) {
 		this(logger, types, (String) null);
 	}
 
-	public SqliteProviderImpl(Logger logger, List<DataType> types, File file) {
+	public SqliteProviderImpl(Logger logger, List<FieldSupplier> types, File file) {
 		this(logger, types, file.getAbsolutePath());
 	}
 
@@ -61,7 +76,12 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 	}
 
 	@Override
-	protected <T extends SqlSerializable> Table<T> newTable(Class<T> type)
+	protected String getLastInsertIdFunc() {
+		return "last_insert_rowid";
+	}
+
+	@Override
+	protected <T extends SqlSerializable> Table<T> newTable(SerializableClass<T> type)
 			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException {
 		return new SqliteTable<>(this, type);

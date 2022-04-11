@@ -25,43 +25,81 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
+import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
 import com.github.almightysatan.jo2sql.impl.mysql.MysqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.sqlite.SqliteProviderImpl;
 import com.github.almightysatan.jo2sql.logger.CoutLogger;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
+/**
+ * Used to create an {@link SqlProvider}. Can be used to create multiple
+ * {@link SqlProvider SqlProviders}
+ * 
+ * @author Almighty-Satan
+ */
 public class SqlBuilder {
 
 	private static final Logger DEFAULT_LOGGER = new CoutLogger();
 
 	private Logger logger = DEFAULT_LOGGER;
-	private List<DataType> dataTypes = new ArrayList<>();
+	private List<FieldSupplier> fieldTypes = new ArrayList<>();
 
-	public SqlBuilder addDataTypes(DataType... dataTypes) {
-		this.dataTypes.addAll(Arrays.asList(dataTypes));
+	public SqlBuilder addFieldTypes(FieldSupplier... fieldTypes) {
+		this.fieldTypes.addAll(Arrays.asList(fieldTypes));
 		return this;
 	}
 
-	public SqlBuilder addDataTypes(List<DataType> dataTypes) {
-		this.dataTypes.addAll(dataTypes);
+	public SqlBuilder addFieldTypes(List<FieldSupplier> fieldTypes) {
+		this.fieldTypes.addAll(fieldTypes);
 		return this;
 	}
 
+	/**
+	 * Sets the {@link Logger} for all {@link SqlProvider SqlProviders} created from
+	 * this {@link SqlBuilder}. The default value is a static instance of
+	 * {@link CoutLogger}
+	 * 
+	 * @param logger The {@link Logger}
+	 * @return This {@link SqlBuilder}
+	 */
 	public SqlBuilder setLogger(Logger logger) {
+		if (logger == null)
+			throw new IllegalArgumentException();
+
 		this.logger = logger;
 		return this;
 	}
 
+	/**
+	 * Creates a MYSQL connection. The {@link SqlBuilder} can be reused afterwards.
+	 * 
+	 * @param url      The URL of the database
+	 * @param user     The user
+	 * @param password The password of the user
+	 * @param schema   The name of the schema
+	 * @return An {@link SqlProvider}
+	 */
 	public SqlProvider mysql(String url, String user, String password, String schema) {
-		return new MysqlProviderImpl(this.logger, this.dataTypes, url, user, password, schema);
+		return new MysqlProviderImpl(this.logger, this.fieldTypes, url, user, password, schema);
 	}
 
+	/**
+	 * Creates an in-memory Sqlite database. The {@link SqlBuilder} can be reused
+	 * afterwards.
+	 * 
+	 * @return An {@link SqlProvider}
+	 */
 	public SqlProvider sqlite() {
-		return new SqliteProviderImpl(this.logger, this.dataTypes);
+		return new SqliteProviderImpl(this.logger, this.fieldTypes);
 	}
 
+	/**
+	 * Creates an Sqlite database that is saved to the given file. The
+	 * {@link SqlBuilder} can be reused afterwards.
+	 * 
+	 * @return An {@link SqlProvider}
+	 */
 	public SqlProvider sqlite(File file) {
-		return new SqliteProviderImpl(this.logger, this.dataTypes, file);
+		return new SqliteProviderImpl(this.logger, this.fieldTypes, file);
 	}
 }

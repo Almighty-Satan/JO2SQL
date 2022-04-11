@@ -24,41 +24,39 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 
 import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.AnnotatedField;
+import com.github.almightysatan.jo2sql.impl.SerializableClass;
 import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+import com.github.almightysatan.jo2sql.impl.fields.ColumnData;
 
 public class SqliteTable<T extends SqlSerializable> extends Table<T> {
 
-	SqliteTable(SqliteProviderImpl provider, Class<T> type) throws NoSuchMethodException, SecurityException,
+	SqliteTable(SqliteProviderImpl provider, SerializableClass<T> type) throws NoSuchMethodException, SecurityException,
 			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		super(provider, type);
 	}
 
 	@Override
-	protected String getLastInsertIdFunc() {
-		return "last_insert_rowid";
-	}
-
-	@Override
 	protected void check() throws SQLException {
-		if (!this.provider
-				.executeQuery("SELECT * FROM sqlite_schema WHERE type='table' AND name = '" + this.name + "' LIMIT 1;")
+		if (!this.provider.executeQuery(
+				"SELECT * FROM sqlite_schema WHERE type='table' AND name = '" + this.type.getName() + "' LIMIT 1;")
 				.next()) {
 			// Table does not exist
-			this.provider.getLogger().info("Creating table %s", this.name);
+			this.provider.getLogger().info("Creating table %s", this.getFullName());
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;
-			for (AnnotatedField field : this.fields.values()) {
-				if (first)
-					first = false;
-				else
-					statement.append(",");
-				field.appendColumn(statement);
+			for (AnnotatedField field : this.getType().getFields().values()) {
+				for (ColumnData column : field.getColumnData()) {
+					if (first)
+						first = false;
+					else
+						statement.append(",");
+					statement.append("`").append(column.getName()).append("`").append(column.getSql());
+				}
 				field.appendIndex(statement, ",");
 			}
-			if (!this.primaryKey.indexFields.isEmpty())
-				this.primaryKey.appendIndex(statement, ",");
+			this.getType().getPrimaryKey().appendIndex(statement, ",");
 			statement.append(");");
 
 			this.provider.executeUpdate(statement.toString());

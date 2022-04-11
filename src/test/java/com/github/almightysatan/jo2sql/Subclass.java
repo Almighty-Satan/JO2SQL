@@ -22,44 +22,48 @@ package com.github.almightysatan.jo2sql;
 
 import java.util.Objects;
 
-public class ParentObject implements SqlSerializable {
+public class Subclass extends Superclass {
 
-	@Column(value = "id", primary = true, autoIncrement = true)
-	public long id;
-	@Column(value = "child", notNull = false)
-	public ChildObject child;
+	@Column(value = "id", autoIncrement = true, primary = true)
+	long id;
+	@Column(value = "abc", size = 100)
+	private String abc;
 
-	public ParentObject() {
+	public Subclass() {
 	}
 
-	public ParentObject(ChildObject child) {
-		this.child = child;
+	public Subclass(String test, String abc) {
+		super(test);
+		this.abc = abc;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.child, this.id);
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(this.abc, this.id);
+		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj == null)
+		if (!super.equals(obj))
 			return false;
 		if (this.getClass() != obj.getClass())
 			return false;
-		ParentObject other = (ParentObject) obj;
-		return Objects.equals(this.child, other.child) && this.id == other.id;
+		Subclass other = (Subclass) obj;
+		return Objects.equals(this.abc, other.abc) && this.id == other.id;
 	}
 
 	@Override
 	public String toString() {
-		return "ParentObject [integer=" + this.id + ", child=" + this.child + "]";
+		return "Subclass [id=" + this.id + ", abc=" + this.abc + "]";
 	}
 
 	@Override
 	public String getTableName() {
-		return "ParentObject";
+		return "Subclass";
 	}
 }

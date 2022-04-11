@@ -18,24 +18,22 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.datatypes;
+package com.github.almightysatan.jo2sql.impl.mysql;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.lang.reflect.Field;
 
-import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedStringField;
 
-public interface DataType {
+class MysqlAnnotatedStringField extends AnnotatedStringField {
 
-	abstract Class<?>[] getClasses();
+	MysqlAnnotatedStringField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+		super(provider, field, annotation);
+	}
 
-	abstract ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> type, int size);
-
-	abstract Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
-			throws SQLException, Throwable;
-
-	abstract void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
-			throws Throwable;
+	@Override
+	protected String loadColumn(int size) {
+		return "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'";
+	}
 }

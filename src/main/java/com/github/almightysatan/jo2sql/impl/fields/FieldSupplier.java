@@ -18,29 +18,16 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.impl.fields;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.lang.reflect.Field;
 
-import com.github.almightysatan.jo2sql.Selector;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+import com.github.almightysatan.jo2sql.Column;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 
-public class PrimaryKey extends AbstractIndex {
+public interface FieldSupplier {
 
-	private Selector selector;
+	boolean isType(Field field);
 
-	@Override
-	public void appendIndex(StringBuilder builder, String delimiter) {
-		builder.append(delimiter).append("PRIMARY KEY (`").append(
-				Arrays.stream(this.indexFields).map(AnnotatedField::getColumnName).collect(Collectors.joining("`,`")))
-				.append("`)");
-	}
-
-	public Selector getSelector() {
-		if (this.selector == null)
-			this.selector = Selector
-					.eqAnd(Arrays.stream(this.indexFields).map(AnnotatedField::getColumnName).toArray(String[]::new));
-		return this.selector;
-	}
+	AnnotatedField createField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable;
 }

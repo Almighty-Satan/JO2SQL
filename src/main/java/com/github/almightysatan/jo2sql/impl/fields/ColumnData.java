@@ -18,31 +18,23 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.datatypes;
+package com.github.almightysatan.jo2sql.impl.fields;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+public class ColumnData {
 
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+	String name;
+	String sql;
 
-public abstract class StringDataType implements DataType {
-
-	@Override
-	public Class<?>[] getClasses() {
-		return new Class[] { String.class };
+	ColumnData(String name, String sql) {
+		this.name = name;
+		this.sql = sql;
 	}
 
-	@Override
-	public Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
-			throws SQLException {
-		return result.getString(label);
+	public String getName() {
+		return this.name;
 	}
 
-	@Override
-	public void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
-			throws SQLException {
-		statement.setString(index, (String) value);
+	public String getSql() {
+		return this.sql;
 	}
-
 }

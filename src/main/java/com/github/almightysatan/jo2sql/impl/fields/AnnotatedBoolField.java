@@ -18,36 +18,33 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.datatypes;
+package com.github.almightysatan.jo2sql.impl.fields;
 
+import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 
-public class LongDataType implements DataType {
+public class AnnotatedBoolField extends SimpleAnnotatedField {
 
-	@Override
-	public Class<?>[] getClasses() {
-		return new Class[] { long.class, Long.class };
+	public AnnotatedBoolField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+		super(provider, field, annotation);
 	}
 
 	@Override
-	public ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> clazz, int size) {
-		return new ColumnData[] { new ColumnData(null, "BIGINT") };
+	protected String loadColumn() {
+		return "BOOL";
 	}
 
 	@Override
-	public Object getValue(SqlProviderImpl provider, Class<?> type, ResultSet result, String label)
-			throws SQLException {
-		return result.getLong(label);
+	public void setValues(PreparedStatement statement, int index, Object value) throws Throwable {
+		statement.setBoolean(index, value == null ? false : (boolean) value);
 	}
 
 	@Override
-	public void setValue(SqlProviderImpl provider, PreparedStatement statement, int index, Object value)
-			throws SQLException {
-		statement.setLong(index, (long) value);
+	public Object loadValue(String prefix, ResultSet result) throws Throwable {
+		return result.getBoolean(prefix + this.getColumnName());
 	}
 }

@@ -18,20 +18,23 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.mysql;
+package com.github.almightysatan.jo2sql.impl.fields;
 
-import com.github.almightysatan.jo2sql.impl.ColumnData;
+import java.lang.reflect.Field;
+
+import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.datatypes.StringDataType;
 
-public class MysqlStringDataType extends StringDataType {
+abstract class SimpleAnnotatedField extends AnnotatedField {
+
+	SimpleAnnotatedField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+		super(provider, field, annotation);
+	}
 
 	@Override
-	public ColumnData[] getColumnData(SqlProviderImpl provider, Class<?> type, int size) {
-		if (size <= 0)
-			throw new Error("Invalid size: " + size);
-
-		return new ColumnData[] {
-				new ColumnData(null, "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'") };
+	protected final ColumnData[] loadColumns() {
+		return new ColumnData[] { new ColumnData(this.getField().getName(), this.loadColumn()) };
 	}
+
+	protected abstract String loadColumn();
 }

@@ -34,6 +34,8 @@ import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.Selector;
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+import com.github.almightysatan.jo2sql.impl.fields.ColumnData;
 
 public abstract class Table<T extends SqlSerializable> {
 
@@ -118,7 +120,7 @@ public abstract class Table<T extends SqlSerializable> {
 					first = false;
 				else
 					replaceBuilder.append("`,`");
-				replaceBuilder.append(column.getProcessedName());
+				replaceBuilder.append(column.getName());
 				columns++;
 			}
 		}
@@ -132,11 +134,11 @@ public abstract class Table<T extends SqlSerializable> {
 		return replaceBuilder.append(");").toString();
 	}
 
-	private void loadValues(CachedStatement statement, T object)
+	private void loadValues(CachedStatement statement, T instance)
 			throws IllegalArgumentException, IllegalAccessException, SQLException {
 		int i = 0;
 		for (AnnotatedField field : this.getType().getFields().values())
-			statement.setParameter(i++, field.getType(), field.getField().get(object));
+			statement.setParameter(i++, field, field.getValue(instance));
 	}
 
 	public PreparedSelect<T> preparePrimarySelect() {
@@ -147,7 +149,7 @@ public abstract class Table<T extends SqlSerializable> {
 		return this.prepareSelect(result -> {
 			try {
 				if (result.next())
-					return this.createObject(result);
+					return this.type.newInstance(result);
 				else
 					return null;
 			} catch (Throwable e) {
@@ -162,7 +164,7 @@ public abstract class Table<T extends SqlSerializable> {
 			try {
 				List<T> list = new ArrayList<>();
 				while (result.next())
-					list.add(this.createObject(result));
+					list.add(this.type.newInstance(result));
 				return list.toArray((T[]) Array.newInstance(this.type.getType(), list.size()));
 			} catch (Throwable e) {
 				throw new Error("Error while parsing result", e);
@@ -187,20 +189,12 @@ public abstract class Table<T extends SqlSerializable> {
 						this.statement = Table.this.provider.prepareStatement(sql);
 
 					for (int i = 0; i < fields.length; i++)
-						this.statement.setParameter(i, fields[i].getType(), values[i]);
+						this.statement.setParameter(i, fields[i], values[i]);
 					ResultSet result = Table.this.provider.executeQuery(this.statement);
 					return resultInterpreter.apply(result);
 				});
 			}
 		};
-	}
-
-	private T createObject(ResultSet result) throws Throwable {
-		T value = this.type.newInstance();
-		for (AnnotatedField field : this.getType().getFields().values())
-			field.getField().set(value,
-					field.getType().getValue(this.provider, field.getField().getType(), result, field.getName()));
-		return value;
 	}
 
 	PreparedObjectDelete<T> prepareObjectDelete() {
@@ -220,7 +214,7 @@ public abstract class Table<T extends SqlSerializable> {
 						this.statement = Table.this.provider.prepareStatement(sql);
 
 					for (int i = 0; i < fields.length; i++)
-						this.statement.setParameter(i, fields[i].getType(), fields[i].getField().get(object));
+						this.statement.setParameter(i, fields[i], fields[i].getValue(object));
 					Table.this.provider.executeUpdate(this.statement);
 					return null;
 				});
@@ -245,7 +239,7 @@ public abstract class Table<T extends SqlSerializable> {
 						this.statement = Table.this.provider.prepareStatement(sql);
 
 					for (int i = 0; i < fields.length; i++)
-						this.statement.setParameter(i, fields[i].getType(), values[i]);
+						this.statement.setParameter(i, fields[i], values[i]);
 					Table.this.provider.executeUpdate(this.statement);
 					return null;
 				});

@@ -21,19 +21,21 @@
 package com.github.almightysatan.jo2sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import com.github.almightysatan.jo2sql.logger.CoutLogger;
-import com.github.almightysatan.jo2sql.logger.Logger;
-
 public class ApiTest {
 
-	static final Logger LOGGER = new CoutLogger();
+	static final List<BiConsumer<ApiTest, SqlProvider>> tests = Arrays.asList(ApiTest::testReplaceSelect,
+			ApiTest::testNestedObject, ApiTest::testInheritance, ApiTest::testAi);
 
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
@@ -44,7 +46,6 @@ public class ApiTest {
 		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object.string)
 				.completeUnsafe();
 
-		LOGGER.info("" + object.equals(deserialized));
 		assertEquals(object, deserialized);
 
 		sql.terminate();
@@ -63,8 +64,34 @@ public class ApiTest {
 		ParentObject deserialized = sql.prepareSelect(ParentObject.class, Selector.eq("id")).values(id)
 				.completeUnsafe();
 
-		LOGGER.info("" + parent.equals(deserialized));
 		assertEquals(parent, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testInheritance(SqlProvider sql) {
+		Subclass object = new Subclass("aa", "bb");
+		object.id = sql.prepareAiReplace(Subclass.class).object(object).completeUnsafe();
+
+		Subclass deserialized = sql.prepareSelect(Subclass.class, Selector.eq("id")).values(object.id).completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testAi(SqlProvider sql) {
+		ParentObject object = new ParentObject();
+		long id0 = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+		long id1 = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+		long id2 = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+
+		assertNotEquals(id0, id1);
+		assertNotEquals(id1, id2);
 
 		sql.terminate();
 	}

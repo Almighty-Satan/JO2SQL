@@ -23,23 +23,23 @@ package com.github.almightysatan.jo2sql.impl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
-import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
 
 public class CachedStatement {
 
 	private final String sql;
-	private final DataType[] parameterTypes;
+	private final AnnotatedField[] fields;
 	private final Object[] parameters;
 	private PreparedStatement statement;
 
 	public CachedStatement(String sql, int numValues) {
 		this.sql = sql;
-		this.parameterTypes = new DataType[numValues];
+		this.fields = new AnnotatedField[numValues];
 		this.parameters = new Object[numValues];
 	}
 
-	public void setParameter(int parameterIndex, DataType parameterType, Object parameter) {
-		this.parameterTypes[parameterIndex] = parameterType;
+	public void setParameter(int parameterIndex, AnnotatedField field, Object parameter) {
+		this.fields[parameterIndex] = field;
 		this.parameters[parameterIndex] = parameter;
 	}
 
@@ -48,9 +48,13 @@ public class CachedStatement {
 		if (this.statement == null || this.statement.getConnection() != connection)
 			this.statement = connection.prepareStatement(this.sql);
 
-		for (int i = 0; i < this.parameterTypes.length; i++)
-			if (this.parameterTypes[i] != null)
-				this.parameterTypes[i].setValue(provider, this.statement, i + 1, this.parameters[i]);
+		for (int i = 1, j = 0; j < this.fields.length; j++) {
+			AnnotatedField field = this.fields[j];
+			if (field != null) {
+				field.setValues(this.statement, i, this.parameters[j]);
+				i += field.getColumnData().length;
+			}
+		}
 
 		return this.statement;
 	}

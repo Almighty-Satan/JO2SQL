@@ -20,6 +20,7 @@
 
 package com.github.almightysatan.jo2sql.impl.mysql;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -27,26 +28,39 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 import com.github.almightysatan.jo2sql.impl.SerializableClass;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
-import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class MysqlProviderImpl extends SqlProviderImpl {
 
-	static final DataType STRING_DATA_TYPE = new MysqlStringDataType();
+	static final FieldSupplier STRING_FIELD_PROVIDER = new FieldSupplier() {
+
+		@Override
+		public boolean isType(Field field) {
+			return field.getType() == String.class;
+		}
+
+		@Override
+		public AnnotatedField createField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+			return new MysqlAnnotatedStringField(provider, field, annotation);
+		}
+	};
 
 	private final String url;
 	private final String user;
 	private final String password;
 	private final String schema;
 
-	public MysqlProviderImpl(Logger logger, List<DataType> types, String url, String user, String password,
+	public MysqlProviderImpl(Logger logger, List<FieldSupplier> types, String url, String user, String password,
 			String schema) {
 		super(logger, types = new ArrayList<>(types));
-		types.add(STRING_DATA_TYPE);
+		types.add(STRING_FIELD_PROVIDER);
 		this.url = url;
 		this.user = user;
 		this.password = password;

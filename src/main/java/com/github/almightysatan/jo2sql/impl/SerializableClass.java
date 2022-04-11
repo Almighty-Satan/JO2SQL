@@ -22,7 +22,8 @@ package com.github.almightysatan.jo2sql.impl;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Map;
 
 import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
 
 public class SerializableClass<T extends SqlSerializable> {
 
@@ -39,35 +41,39 @@ public class SerializableClass<T extends SqlSerializable> {
 	private final Map<String, AnnotatedField> fields = new HashMap<>();
 	private final PrimaryKey primaryKey = new PrimaryKey();
 
-	public SerializableClass(SqlProviderImpl provider, Class<T> type) throws NoSuchMethodException, SecurityException,
-			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	public SerializableClass(SqlProviderImpl provider, Class<T> type) throws Throwable {
 		this.type = type;
 		this.constructor = type.getDeclaredConstructor();
 		this.constructor.setAccessible(true);
 		this.name = this.constructor.newInstance().getTableName();
 
 		List<AnnotatedField> primaryFields = new ArrayList<>();
-		for (Field field : type.getDeclaredFields()) {
-			Column annotation = field.getAnnotation(Column.class);
-			if (annotation != null) {
-				if (this.fields.containsKey(annotation.value()))
-					throw new Error(
-							String.format("Duplicate column name: %s in class %s", annotation.value(), type.getName()));
-				if (annotation.value().contains(String.valueOf(AnnotatedField.INTERNAL_COLUMN_DELIMITER)))
-					throw new Error(String.format("Column name contains an invalid char: %s in class %s",
-							annotation.value(), type.getName()));
-				AnnotatedField annotatedField = new AnnotatedField(provider, field, annotation);
-				if (annotation.primary())
-					primaryFields.add(annotatedField);
-				this.fields.put(annotation.value(), annotatedField);
-			}
-		}
+		this.loadFields(provider, primaryFields, type);
 
 		if (this.fields.size() == 0)
 			throw new Error("No columns found in class: " + type.getName());
 
 		if ((this.primaryKey.indexFields = primaryFields.toArray(new AnnotatedField[primaryFields.size()])).length == 0)
 			throw new Error("Missing primary key in table " + this.getName());
+	}
+
+	private void loadFields(SqlProviderImpl provider, List<AnnotatedField> primaryFields, Class<?> clazz)
+			throws Throwable {
+		for (Field field : clazz.getDeclaredFields()) {
+			Column annotation = field.getAnnotation(Column.class);
+			if (annotation != null && !Modifier.isStatic(field.getModifiers())) {
+				AnnotatedField annotatedField = provider.createAnnotatedField(field, annotation);
+				if (annotation.primary())
+					primaryFields.add(annotatedField);
+
+				if (this.fields.put(annotation.value(), annotatedField) != null)
+					throw new Error(String.format("Duplicate column name: %s in class %s", annotation.value(),
+							this.type.getName()));
+			}
+		}
+
+		if (clazz.getSuperclass() != null && clazz.getSuperclass() != Object.class)
+			this.loadFields(provider, primaryFields, clazz.getSuperclass());
 	}
 
 	AnnotatedField[] getFieldsByKey(String... keys) {
@@ -78,9 +84,11 @@ public class SerializableClass<T extends SqlSerializable> {
 		return fields;
 	}
 
-	public T newInstance()
-			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		return this.constructor.newInstance();
+	public T newInstance(ResultSet result) throws Throwable {
+		T instance = this.constructor.newInstance();
+		for (AnnotatedField field : this.fields.values())
+			field.loadValue("", result, instance);
+		return instance;
 	}
 
 	public Class<T> getType() {

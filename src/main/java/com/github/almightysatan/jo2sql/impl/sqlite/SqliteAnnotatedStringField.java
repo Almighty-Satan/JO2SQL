@@ -18,29 +18,22 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.impl.sqlite;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.lang.reflect.Field;
 
-import com.github.almightysatan.jo2sql.Selector;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+import com.github.almightysatan.jo2sql.Column;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedStringField;
 
-public class PrimaryKey extends AbstractIndex {
+class SqliteAnnotatedStringField extends AnnotatedStringField {
 
-	private Selector selector;
-
-	@Override
-	public void appendIndex(StringBuilder builder, String delimiter) {
-		builder.append(delimiter).append("PRIMARY KEY (`").append(
-				Arrays.stream(this.indexFields).map(AnnotatedField::getColumnName).collect(Collectors.joining("`,`")))
-				.append("`)");
+	SqliteAnnotatedStringField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+		super(provider, field, annotation);
 	}
 
-	public Selector getSelector() {
-		if (this.selector == null)
-			this.selector = Selector
-					.eqAnd(Arrays.stream(this.indexFields).map(AnnotatedField::getColumnName).toArray(String[]::new));
-		return this.selector;
+	@Override
+	protected String loadColumn(int size) {
+		return "VARCHAR(" + size + ")";
 	}
 }

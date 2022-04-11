@@ -18,33 +18,15 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql;
 
-public class ColumnData {
+import java.util.function.BiConsumer;
 
-	String name;
-	String sqlType;
-	String processedName;
-	String sqlStatement;
+public class MysqlTest {
 
-	public ColumnData(String name, String sqlType) {
-		this.name = name;
-		this.sqlType = sqlType;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public String getSqlType() {
-		return this.sqlType;
-	}
-
-	public String getProcessedName() {
-		return this.processedName;
-	}
-
-	public String getSqlStatement() {
-		return this.sqlStatement;
+	public static void main(String[] args) {
+		for (BiConsumer<ApiTest, SqlProvider> test : ApiTest.tests)
+			test.accept(new ApiTest(), new SqlBuilder().mysql(System.getenv("mysqlUrl"), System.getenv("mysqlUser"),
+					System.getenv("mysqlPassword"), "jo2sqlTest"));
 	}
 }

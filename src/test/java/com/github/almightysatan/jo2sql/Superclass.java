@@ -18,29 +18,46 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
-import com.github.almightysatan.jo2sql.Selector;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+public class Superclass implements SqlSerializable {
 
-public class PrimaryKey extends AbstractIndex {
+	@Column(value = "test", size = 100)
+	private String test;
 
-	private Selector selector;
-
-	@Override
-	public void appendIndex(StringBuilder builder, String delimiter) {
-		builder.append(delimiter).append("PRIMARY KEY (`").append(
-				Arrays.stream(this.indexFields).map(AnnotatedField::getColumnName).collect(Collectors.joining("`,`")))
-				.append("`)");
+	public Superclass() {
 	}
 
-	public Selector getSelector() {
-		if (this.selector == null)
-			this.selector = Selector
-					.eqAnd(Arrays.stream(this.indexFields).map(AnnotatedField::getColumnName).toArray(String[]::new));
-		return this.selector;
+	public Superclass(String test) {
+		this.test = test;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.test);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (this.getClass() != obj.getClass())
+			return false;
+		Superclass other = (Superclass) obj;
+		return Objects.equals(this.test, other.test);
+	}
+
+	@Override
+	public String toString() {
+		return "Superclass [test=" + this.test + "]";
+	}
+
+	@Override
+	public String getTableName() {
+		return "Superclass";
 	}
 }

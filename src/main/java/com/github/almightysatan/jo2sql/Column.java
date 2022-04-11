@@ -29,17 +29,46 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
 
+	/**
+	 * A unique, non-null name for this column. Should only contain alphanumeric
+	 * characters
+	 * 
+	 * @return The name of this column
+	 */
 	String value();
 
+	/**
+	 * Whether this column can be null
+	 * 
+	 * @return True if this column should never be null false otherwise (Default:
+	 *         true)
+	 */
 	boolean notNull() default true;
 
+	/**
+	 * Whether the value of this column should be automatically set to a unique
+	 * value when 0. This is ignored if the type of the field is anything other than
+	 * long or {@link Long}
+	 * 
+	 * @return True if the value should be incremented automatically, false
+	 *         otherwise (Default: false)
+	 */
 	boolean autoIncrement() default false;
 
+	/**
+	 * Whether the values of this column are unique
+	 * 
+	 * @return True if unique, false if not unique (Default: false)
+	 */
 	boolean unique() default false;
 
+	/**
+	 * Whether this column is part if the Primary Key. Every table has to have a
+	 * Primary Key that contains at least one column
+	 * 
+	 * @return True if part of the Primary Key, false otherwise (Default: false)
+	 */
 	boolean primary() default false;
-
-	boolean index() default false;
 
 	int size() default -1;
 }

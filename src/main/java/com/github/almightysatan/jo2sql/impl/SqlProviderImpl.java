@@ -20,6 +20,7 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,6 +37,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.DatabaseAction;
 import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
@@ -44,26 +46,42 @@ import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.Selector;
 import com.github.almightysatan.jo2sql.SqlProvider;
 import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.datatypes.BoolDataType;
-import com.github.almightysatan.jo2sql.impl.datatypes.DataType;
-import com.github.almightysatan.jo2sql.impl.datatypes.IntDataType;
-import com.github.almightysatan.jo2sql.impl.datatypes.LongDataType;
-import com.github.almightysatan.jo2sql.impl.datatypes.SerializableDataType;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedBoolField;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedIntField;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedLongField;
+import com.github.almightysatan.jo2sql.impl.fields.AnnotatedSerializableField;
+import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
+import com.github.almightysatan.jo2sql.impl.fields.SimpleFieldSupplier;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public abstract class SqlProviderImpl implements SqlProvider {
 
-	private static final List<DataType> DATA_TYPES = Arrays.asList(new BoolDataType(), new IntDataType(),
-			new LongDataType(), new SerializableDataType());
+	private static final List<FieldSupplier> DATA_TYPES = Arrays.asList(
+			new SimpleFieldSupplier(AnnotatedBoolField::new, boolean.class, Boolean.class),
+			new SimpleFieldSupplier(AnnotatedIntField::new, int.class, Integer.class),
+			new SimpleFieldSupplier(AnnotatedLongField::new, long.class, Long.class), new FieldSupplier() {
 
-	private final List<DataType> types;
+				@Override
+				public boolean isType(Field field) {
+					return SqlSerializable.class.isAssignableFrom(field.getType());
+				}
+
+				@Override
+				public AnnotatedField createField(SqlProviderImpl provider, Field field, Column annotation)
+						throws Throwable {
+					return new AnnotatedSerializableField(provider, field, annotation);
+				}
+			});
+
+	private final List<FieldSupplier> types;
 	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 	private final Logger logger;
 	private final Map<Class<?>, Table<?>> tables = new HashMap<>();
 	private Connection connection;
 	private CachedStatement selectLastInsertIdStatement;
 
-	public SqlProviderImpl(Logger logger, List<DataType> types) {
+	public SqlProviderImpl(Logger logger, List<FieldSupplier> types) {
 		this.logger = logger;
 		types.addAll(DATA_TYPES);
 		this.types = types;
@@ -104,8 +122,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 							duplicate.get().getType().getType()));
 				this.tables.put(type, table);
 				return table;
-			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
-					| IllegalArgumentException | InvocationTargetException e) {
+			} catch (Throwable e) {
 				throw new Error("Error while loading class", e);
 			}
 		}
@@ -115,12 +132,12 @@ public abstract class SqlProviderImpl implements SqlProvider {
 			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException;
 
-	DataType getDataType(Class<?> type) {
-		for (DataType value : this.types)
-			for (Class<?> t : value.getClasses())
-				if (t.isAssignableFrom(type))
-					return value;
-		throw new Error("Unsupported type: " + type.getName());
+	AnnotatedField createAnnotatedField(Field field, Column annotation) throws Throwable {
+		for (FieldSupplier type : this.types)
+			if (type.isType(field))
+				return type.createField(this, field, annotation);
+		throw new Error(
+				String.format("Unsupported type of field %s in %s", field.getName(), field.getDeclaringClass()));
 	}
 
 	@Override
