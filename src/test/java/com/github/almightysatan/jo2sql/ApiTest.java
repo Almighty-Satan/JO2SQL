@@ -35,7 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class ApiTest {
 
 	static final List<BiConsumer<ApiTest, SqlProvider>> tests = Arrays.asList(ApiTest::testReplaceSelect,
-			ApiTest::testNestedObject, ApiTest::testInheritance, ApiTest::testAi);
+			ApiTest::testNestedObject, ApiTest::testInheritance, ApiTest::testAi, ApiTest::testStringFuckery);
 
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
@@ -92,6 +92,23 @@ public class ApiTest {
 
 		assertNotEquals(id0, id1);
 		assertNotEquals(id1, id2);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testStringFuckery(SqlProvider sql) {
+		TestObject object0 = new TestObject("Hello World   ", true, 69);
+		sql.prepareAiReplace(TestObject.class).object(object0).queue();
+
+		TestObject object1 = new TestObject("Hello World", false, 123);
+		sql.prepareAiReplace(TestObject.class).object(object1).queue();
+
+		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object0.string)
+				.completeUnsafe();
+
+		assertEquals(object0, deserialized);
 
 		sql.terminate();
 	}
