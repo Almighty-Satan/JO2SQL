@@ -20,29 +20,21 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
-import java.util.Arrays;
+import com.github.almightysatan.jo2sql.SqlSerializable;
 
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
-import com.github.almightysatan.jo2sql.impl.fields.ColumnData;
+public class MapEntry implements SqlSerializable {
 
-public abstract class AbstractIndex {
+	/*
+	 * 1. Primary Key columns of the class that declares this map
+	 * 
+	 * 2. A single column for the map key (no nested objects, maps, lists, arrays,
+	 * etc. as key
+	 * 
+	 * 3. Columns for the map value
+	 */
 
-	private final AnnotatedField[] indexFields;
-	private final ColumnData[] columnData;
-
-	public AbstractIndex(AnnotatedField... indexFields) {
-		this.indexFields = indexFields;
-		this.columnData = Arrays.stream(indexFields).flatMap(field -> Arrays.stream(field.getColumnData()))
-				.toArray(ColumnData[]::new);
-	}
-
-	public abstract void appendIndex(StringBuilder builder, String delimiter);
-
-	public AnnotatedField[] getIndexFields() {
-		return this.indexFields;
-	}
-
-	public ColumnData[] getColumnData() {
-		return this.columnData;
+	@Override
+	public String getTableName() {
+		return "MapEntry";
 	}
 }

@@ -51,10 +51,9 @@ public class AnnotatedSerializableField extends AnnotatedField {
 		this.replace = this.table.prepareReplace();
 		this.primarySelect = this.table.preparePrimarySelect();
 
-		ColumnData[] dataArray = new ColumnData[this.table.getType().getPrimaryKey().indexFields.length];
+		ColumnData[] dataArray = new ColumnData[this.table.getType().getPrimaryKey().getColumnData().length];
 		int i = 0;
-		for (AnnotatedField field : this.table.getType().getPrimaryKey().indexFields) {
-			ColumnData data = field.getColumnData()[0];
+		for (ColumnData data : this.table.getType().getPrimaryKey().getColumnData()) {
 			dataArray[i++] = new ColumnData(this.getColumnName() + INTERNAL_COLUMN_DELIMITER + data.getName(),
 					data.getSqlType());
 		}
@@ -64,7 +63,7 @@ public class AnnotatedSerializableField extends AnnotatedField {
 
 	@Override
 	public void setValues(PreparedStatement statement, int startIndex, Object value) throws Throwable {
-		for (AnnotatedField field : this.table.getType().getPrimaryKey().indexFields)
+		for (AnnotatedField field : this.table.getType().getPrimaryKey().getIndexFields())
 			field.setValues(statement, startIndex++, value == null ? null : field.getField().get(value));
 		if (value != null)
 			this.getProvider().runDatabaseAction(this.replace.object((SqlSerializable) value));
@@ -72,9 +71,9 @@ public class AnnotatedSerializableField extends AnnotatedField {
 
 	@Override
 	public Object loadValue(String prefix, ResultSet result) throws Throwable {
-		Object[] values = new Object[this.table.getType().getPrimaryKey().indexFields.length];
+		Object[] values = new Object[this.table.getType().getPrimaryKey().getIndexFields().length];
 		int i = 0;
-		for (AnnotatedField field : this.table.getType().getPrimaryKey().indexFields)
+		for (AnnotatedField field : this.table.getType().getPrimaryKey().getIndexFields())
 			values[i++] = field.loadValue(prefix + this.getColumnName() + INTERNAL_COLUMN_DELIMITER, result);
 
 		return this.getProvider().runDatabaseAction(this.primarySelect.values(values));

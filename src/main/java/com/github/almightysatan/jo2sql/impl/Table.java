@@ -198,7 +198,6 @@ public abstract class Table<T extends SqlSerializable> {
 	}
 
 	PreparedObjectDelete<T> prepareObjectDelete() {
-		AnnotatedField[] fields = new AnnotatedField[this.type.getPrimaryKey().indexFields.length];
 		String sql = new StringBuilder("DELETE FROM ").append(this.fullName).append(" ").append("WHERE ")
 				.append(this.type.getPrimaryKey().getSelector()).append(";").toString();
 
@@ -213,6 +212,7 @@ public abstract class Table<T extends SqlSerializable> {
 					if (this.statement == null)
 						this.statement = Table.this.provider.prepareStatement(sql);
 
+					AnnotatedField[] fields = Table.this.type.getPrimaryKey().getIndexFields();
 					for (int i = 0; i < fields.length; i++)
 						this.statement.setParameter(i, fields[i], fields[i].getValue(object));
 					Table.this.provider.executeUpdate(this.statement);

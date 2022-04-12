@@ -39,7 +39,7 @@ public class SerializableClass<T extends SqlSerializable> {
 	private final Constructor<T> constructor;
 	private final String name;
 	private final Map<String, AnnotatedField> fields = new HashMap<>();
-	private final PrimaryKey primaryKey = new PrimaryKey();
+	private final PrimaryKey primaryKey;
 	private AnnotatedField aiField;
 
 	public SerializableClass(SqlProviderImpl provider, Class<T> type) throws Throwable {
@@ -54,10 +54,11 @@ public class SerializableClass<T extends SqlSerializable> {
 		if (this.fields.size() == 0)
 			throw new Error("No columns found in class: " + type.getName());
 
-		if ((this.primaryKey.indexFields = primaryFields.toArray(new AnnotatedField[primaryFields.size()])).length == 0)
+		this.primaryKey = new PrimaryKey(primaryFields.toArray(new AnnotatedField[primaryFields.size()]));
+		if (this.primaryKey.getIndexFields().length == 0)
 			throw new Error("Missing primary key in table " + this.getName());
 
-		if (this.aiField != null && this.primaryKey.indexFields.length > 1)
+		if (this.aiField != null && this.primaryKey.getIndexFields().length > 1)
 			throw new Error(String.format("Multiple columns in Primary Key while using Auto Increment in class %s",
 					this.type.getName()));
 	}
