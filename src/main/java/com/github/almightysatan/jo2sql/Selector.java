@@ -32,6 +32,7 @@ public final class Selector {
 	private static final String CMPG = ">";
 	private static final String CMPLE = "<=";
 	private static final String CMPGE = ">=";
+	private static final String LIKE = "LIKE";
 	private static final String AND = " AND ";
 	private static final String OR = " OR ";
 
@@ -75,6 +76,10 @@ public final class Selector {
 		return keyOp(CMPGE, key);
 	}
 
+	public static Selector like(String key) {
+		return keyOp(LIKE, key);
+	}
+
 	public static Selector and(Selector... selectors) {
 		return selectorOp(AND, selectors);
 	}
@@ -84,7 +89,7 @@ public final class Selector {
 	}
 
 	private static Selector keyOp(String keyOperation, String key) {
-		return new Selector("`" + key + "`" + keyOperation + "?", key);
+		return new Selector("`" + key + "` " + keyOperation + " ?", key);
 	}
 
 	private static Selector multiKeyOp(String keyOperation, String logicOperator, String... keys) {
