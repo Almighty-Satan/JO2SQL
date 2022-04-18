@@ -26,9 +26,9 @@ import java.sql.SQLException;
 import com.github.almightysatan.jo2sql.impl.ColumnData;
 import com.github.almightysatan.jo2sql.impl.SerializableAttribute;
 import com.github.almightysatan.jo2sql.impl.SerializableObject;
-import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.impl.TableImpl;
 
-public class SqliteTable<T> extends Table<T> {
+public class SqliteTable<T> extends TableImpl<T> {
 
 	SqliteTable(SqliteProviderImpl provider, SerializableObject<T> type)
 			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,

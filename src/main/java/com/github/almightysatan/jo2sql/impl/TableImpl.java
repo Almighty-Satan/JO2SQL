@@ -33,14 +33,14 @@ import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.Selector;
 
-public abstract class Table<T> {
+public abstract class TableImpl<T> {
 
 	protected final SqlProviderImpl provider;
 	protected final SerializableObject<T> type;
 	protected final String fullName;
 	private boolean created;
 
-	protected Table(SqlProviderImpl provider, SerializableObject<T> type) {
+	protected TableImpl(SqlProviderImpl provider, SerializableObject<T> type) {
 		this.provider = provider;
 		this.type = type;
 		this.fullName = this.getFullName(this.type.getName());
@@ -66,13 +66,13 @@ public abstract class Table<T> {
 
 			@Override
 			public DatabaseAction<Void> object(T value) {
-				return Table.this.provider.createDatabaseAction(() -> {
-					Table.this.createIfNecessary();
+				return TableImpl.this.provider.createDatabaseAction(() -> {
+					TableImpl.this.createIfNecessary();
 
 					if (this.statement == null)
-						this.statement = Table.this.provider.prepareStatement(sql);
-					Table.this.type.serialize(this.statement, value);
-					Table.this.provider.executeUpdate(this.statement);
+						this.statement = TableImpl.this.provider.prepareStatement(sql);
+					TableImpl.this.type.serialize(this.statement, value);
+					TableImpl.this.provider.executeUpdate(this.statement);
 					return null;
 				});
 			}
@@ -88,15 +88,15 @@ public abstract class Table<T> {
 
 			@Override
 			public DatabaseAction<Long> object(T value) {
-				return Table.this.provider.createDatabaseAction(() -> {
-					Table.this.createIfNecessary();
+				return TableImpl.this.provider.createDatabaseAction(() -> {
+					TableImpl.this.createIfNecessary();
 
 					if (this.statement == null)
-						this.statement = Table.this.provider.prepareStatement(sql);
-					Table.this.type.serialize(this.statement, value);
-					Table.this.provider.executeUpdate(this.statement);
-					ResultSet result = Table.this.provider
-							.executeQuery(Table.this.provider.getSelectLastInsertIdStatement());
+						this.statement = TableImpl.this.provider.prepareStatement(sql);
+					TableImpl.this.type.serialize(this.statement, value);
+					TableImpl.this.provider.executeUpdate(this.statement);
+					ResultSet result = TableImpl.this.provider
+							.executeQuery(TableImpl.this.provider.getSelectLastInsertIdStatement());
 					result.next();
 					return result.getLong(1);
 				});
@@ -176,15 +176,15 @@ public abstract class Table<T> {
 
 			@Override
 			public DatabaseAction<X> values(Object... values) {
-				return Table.this.provider.createDatabaseAction(() -> {
-					Table.this.createIfNecessary();
+				return TableImpl.this.provider.createDatabaseAction(() -> {
+					TableImpl.this.createIfNecessary();
 
 					if (this.statement == null)
-						this.statement = Table.this.provider.prepareStatement(sql);
+						this.statement = TableImpl.this.provider.prepareStatement(sql);
 
 					for (int i = 0; i < fields.length; i++)
 						this.statement.setParameter(i, fields[i], values[i]);
-					ResultSet result = Table.this.provider.executeQuery(this.statement);
+					ResultSet result = TableImpl.this.provider.executeQuery(this.statement);
 					return resultInterpreter.apply(result);
 				});
 			}
@@ -192,7 +192,7 @@ public abstract class Table<T> {
 	}
 
 	PreparedObjectDelete<T> prepareObjectDelete() {
-		SerializableAttribute[] attributes = Table.this.type.getPrimaryKey().getIndexFields();
+		SerializableAttribute[] attributes = TableImpl.this.type.getPrimaryKey().getIndexFields();
 		String sql = new StringBuilder("DELETE FROM ").append(this.fullName).append(" ").append("WHERE ")
 				.append(this.type.getPrimaryKey().getSelector().getCommand()).append(";").toString();
 
@@ -201,16 +201,16 @@ public abstract class Table<T> {
 
 			@Override
 			public DatabaseAction<Void> object(T object) {
-				return Table.this.provider.createDatabaseAction(() -> {
-					Table.this.createIfNecessary();
+				return TableImpl.this.provider.createDatabaseAction(() -> {
+					TableImpl.this.createIfNecessary();
 
 					if (this.statement == null)
-						this.statement = Table.this.provider.prepareStatement(sql);
+						this.statement = TableImpl.this.provider.prepareStatement(sql);
 
 					for (int i = 0; i < attributes.length; i++)
 						this.statement.setParameter(i, attributes[i],
 								((AnnotatedField) attributes[i]).getFieldValue(object));
-					Table.this.provider.executeUpdate(this.statement);
+					TableImpl.this.provider.executeUpdate(this.statement);
 					return null;
 				});
 			}
@@ -227,15 +227,15 @@ public abstract class Table<T> {
 
 			@Override
 			public DatabaseAction<Void> values(Object... values) {
-				return Table.this.provider.createDatabaseAction(() -> {
-					Table.this.createIfNecessary();
+				return TableImpl.this.provider.createDatabaseAction(() -> {
+					TableImpl.this.createIfNecessary();
 
 					if (this.statement == null)
-						this.statement = Table.this.provider.prepareStatement(sql);
+						this.statement = TableImpl.this.provider.prepareStatement(sql);
 
 					for (int i = 0; i < attributes.length; i++)
 						this.statement.setParameter(i, attributes[i], values[i]);
-					Table.this.provider.executeUpdate(this.statement);
+					TableImpl.this.provider.executeUpdate(this.statement);
 					return null;
 				});
 			}

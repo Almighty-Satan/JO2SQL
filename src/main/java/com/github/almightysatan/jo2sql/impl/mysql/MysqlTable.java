@@ -25,9 +25,9 @@ import java.lang.reflect.InvocationTargetException;
 import com.github.almightysatan.jo2sql.impl.ColumnData;
 import com.github.almightysatan.jo2sql.impl.SerializableAttribute;
 import com.github.almightysatan.jo2sql.impl.SerializableObject;
-import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.impl.TableImpl;
 
-public class MysqlTable<T> extends Table<T> {
+public class MysqlTable<T> extends TableImpl<T> {
 
 	MysqlTable(MysqlProviderImpl provider, SerializableObject<T> type) throws NoSuchMethodException, SecurityException,
 			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {

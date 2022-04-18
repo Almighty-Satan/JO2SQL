@@ -48,6 +48,7 @@ import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.Selector;
 import com.github.almightysatan.jo2sql.SqlProvider;
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.Table;
 import com.github.almightysatan.jo2sql.impl.types.BoolType;
 import com.github.almightysatan.jo2sql.impl.types.IntType;
 import com.github.almightysatan.jo2sql.impl.types.LongType;
@@ -64,7 +65,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	private final List<DataType> types;
 	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 	private final Logger logger;
-	private final Map<Class<?>, Table<?>> tables = new HashMap<>();
+	private final Map<Class<?>, TableImpl<?>> tables = new HashMap<>();
 	private Connection connection;
 	private CachedStatement selectLastInsertIdStatement;
 
@@ -100,14 +101,14 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	protected abstract String getLastInsertIdFunc();
 
 	@SuppressWarnings("unchecked")
-	public synchronized <T extends SqlSerializable> Table<T> getTable(Class<T> type) {
+	public synchronized <T extends SqlSerializable> TableImpl<T> getOrCreateTable(Class<T> type) {
 		if (this.tables.containsKey(type))
-			return (Table<T>) this.tables.get(type);
+			return (TableImpl<T>) this.tables.get(type);
 		else {
 			try {
-				Table<T> table = this.newTable(new SerializableClass<>(this, type));
+				TableImpl<T> table = this.newTable(new SerializableClass<>(this, type));
 
-				Optional<Table<?>> duplicate = this.tables.values().stream()
+				Optional<TableImpl<?>> duplicate = this.tables.values().stream()
 						.filter(t -> t.getType().getName().equals(table.getType().getName())).findAny();
 				if (duplicate.isPresent())
 					throw new Error(String.format("Duplicate table name in %s and %s", type,
@@ -120,8 +121,9 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		}
 	}
 
-	public abstract <T> Table<T> newTable(SerializableObject<T> type) throws NoSuchMethodException, SecurityException,
-			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+	public abstract <T> TableImpl<T> newTable(SerializableObject<T> type)
+			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException;
 
 	public DataType getDataType(Class<?> type) {
 		throw new UnsupportedOperationException();
@@ -172,7 +174,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	@Override
 	public <T extends SqlSerializable> DatabaseAction<Void> createIfNecessary(Class<T> type) {
-		Table<T> table = this.getTable(type);
+		TableImpl<T> table = this.getOrCreateTable(type);
 		return this.createDatabaseAction(() -> {
 			table.createIfNecessary();
 			return null;
@@ -181,32 +183,80 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	@Override
 	public <T extends SqlSerializable> PreparedReplace<T, Void> prepareReplace(Class<T> type) {
-		return this.getTable(type).prepareReplace();
+		return this.getOrCreateTable(type).prepareReplace();
 	}
 
 	@Override
 	public <T extends SqlSerializable> PreparedReplace<T, Long> prepareAiReplace(Class<T> type) {
-		return this.getTable(type).prepareAiReplace();
+		return this.getOrCreateTable(type).prepareAiReplace();
+	}
+
+	@Override
+	public <T extends SqlSerializable> PreparedSelect<T> preparePrimarySelect(Class<T> type) {
+		return this.getOrCreateTable(type).preparePrimarySelect();
 	}
 
 	@Override
 	public <T extends SqlSerializable> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector) {
-		return this.getTable(type).prepareSingleSelect(selector);
+		return this.getOrCreateTable(type).prepareSingleSelect(selector);
 	}
 
 	@Override
 	public <T extends SqlSerializable> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector) {
-		return this.getTable(type).prepareMultiSelect(selector);
+		return this.getOrCreateTable(type).prepareMultiSelect(selector);
 	}
 
 	@Override
 	public <T extends SqlSerializable> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type) {
-		return this.getTable(type).prepareObjectDelete();
+		return this.getOrCreateTable(type).prepareObjectDelete();
 	}
 
 	@Override
 	public <T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, Selector selector) {
-		return this.getTable(type).prepareDelete(selector);
+		return this.getOrCreateTable(type).prepareDelete(selector);
+	}
+
+	@Override
+	public <T extends SqlSerializable> Table<T> getTable(Class<T> type) {
+		return new Table<T>() {
+
+			private TableImpl<T> table = SqlProviderImpl.this.getOrCreateTable(type);
+
+			@Override
+			public PreparedReplace<T, Void> prepareReplace() {
+				return this.table.prepareReplace();
+			}
+
+			@Override
+			public PreparedReplace<T, Long> prepareAiReplace() {
+				return this.table.prepareAiReplace();
+			}
+
+			@Override
+			public PreparedSelect<T> preparePrimarySelect() {
+				return this.table.preparePrimarySelect();
+			}
+
+			@Override
+			public PreparedSelect<T> prepareSelect(Selector selector) {
+				return this.table.prepareSingleSelect(selector);
+			}
+
+			@Override
+			public PreparedSelect<T[]> prepareMultiSelect(Selector selector) {
+				return this.table.prepareMultiSelect(selector);
+			}
+
+			@Override
+			public PreparedObjectDelete<T> prepareObjectDelete() {
+				return this.table.prepareObjectDelete();
+			}
+
+			@Override
+			public PreparedDelete prepareDelete(Selector selector) {
+				return this.table.prepareDelete(selector);
+			}
+		};
 	}
 
 	protected <T> DatabaseAction<T> createDatabaseAction(ThrowableSupplier<T> action) {

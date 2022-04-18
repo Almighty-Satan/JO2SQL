@@ -30,7 +30,7 @@ import java.util.List;
 import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.impl.SerializableObject;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.Table;
+import com.github.almightysatan.jo2sql.impl.TableImpl;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class SqliteProviderImpl extends SqlProviderImpl {
@@ -75,7 +75,7 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 	}
 
 	@Override
-	public <T> Table<T> newTable(SerializableObject<T> type) throws NoSuchMethodException, SecurityException,
+	public <T> TableImpl<T> newTable(SerializableObject<T> type) throws NoSuchMethodException, SecurityException,
 			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		return new SqliteTable<>(this, type);
 	}

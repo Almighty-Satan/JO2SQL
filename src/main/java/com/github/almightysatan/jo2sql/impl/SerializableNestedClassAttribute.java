@@ -32,7 +32,7 @@ public class SerializableNestedClassAttribute implements SerializableAttribute {
 	private final SqlProviderImpl provider;
 	private final Class<SqlSerializable> type;
 	private ColumnData[] columnData;
-	private Table<SqlSerializable> table;
+	private TableImpl<SqlSerializable> table;
 	private PreparedReplace<SqlSerializable, Void> replace;
 	private PreparedSelect<SqlSerializable> primarySelect;
 	private String columnName;
@@ -46,7 +46,7 @@ public class SerializableNestedClassAttribute implements SerializableAttribute {
 	}
 
 	protected void loadColumns() throws Throwable {
-		this.table = this.provider.getTable(this.type);
+		this.table = this.provider.getOrCreateTable(this.type);
 		this.replace = this.table.prepareReplace();
 		this.primarySelect = this.table.preparePrimarySelect();
 

@@ -34,9 +34,9 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 	private final SqlProviderImpl provider;
 	private final Class<T> type;
 	private ColumnData[] columnData;
-	private Table<MapEntry> table;
+	private TableImpl<MapEntry> table;
 	private SerializableObject<?> parentObject;
-	private Table<?> parent;
+	private TableImpl<?> parent;
 	private PreparedReplace<MapEntry, Long> replace;
 	private PreparedSelect<MapEntry[]> primarySelect;
 	private String columnName;
@@ -67,7 +67,7 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 	@Override
 	public void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable {
 		if (this.parent == null)
-			this.parent = this.provider.getTable((Class) this.parentObject.getType());
+			this.parent = this.provider.getOrCreateTable((Class) this.parentObject.getType());
 
 		// TODO Delete old (now unused) data
 		long mapId = 0;

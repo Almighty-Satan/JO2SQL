@@ -30,6 +30,8 @@ public interface SqlProvider {
 
 	<T extends SqlSerializable> PreparedReplace<T, Long> prepareAiReplace(Class<T> type);
 
+	<T extends SqlSerializable> PreparedSelect<T> preparePrimarySelect(Class<T> type);
+
 	<T extends SqlSerializable> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector);
 
 	<T extends SqlSerializable> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector);
@@ -37,6 +39,8 @@ public interface SqlProvider {
 	<T extends SqlSerializable> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type);
 
 	<T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, Selector selector);
+
+	<T extends SqlSerializable> Table<T> getTable(Class<T> type);
 
 	void terminate();
 
