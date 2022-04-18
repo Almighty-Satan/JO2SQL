@@ -18,28 +18,33 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.impl.types;
 
-import java.util.Arrays;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-public abstract class AbstractIndex {
+import com.github.almightysatan.jo2sql.DataType;
 
-	private final SerializableAttribute[] indexFields;
-	private final ColumnData[] columnData;
+public class LongType implements DataType {
 
-	public AbstractIndex(SerializableAttribute... indexFields) {
-		this.indexFields = indexFields;
-		this.columnData = Arrays.stream(indexFields).flatMap(field -> Arrays.stream(field.getColumnData()))
-				.toArray(ColumnData[]::new);
+	@Override
+	public Class<?>[] getClasses() {
+		return new Class<?>[] { long.class, Long.class };
 	}
 
-	public abstract void appendIndex(StringBuilder builder, String delimiter);
-
-	public SerializableAttribute[] getIndexFields() {
-		return this.indexFields;
+	@Override
+	public String getSqlType(int size) {
+		return "BIGINT";
 	}
 
-	public ColumnData[] getColumnData() {
-		return this.columnData;
+	@Override
+	public void serialize(PreparedStatement statement, int index, Object value) throws SQLException {
+		statement.setLong(index, value == null ? 0L : (long) value);
+	}
+
+	@Override
+	public Object deserialize(String columnLabel, ResultSet result) throws SQLException {
+		return result.getLong(columnLabel);
 	}
 }

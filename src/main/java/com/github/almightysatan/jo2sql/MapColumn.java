@@ -18,25 +18,22 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.mysql;
+package com.github.almightysatan.jo2sql;
 
-import java.lang.reflect.Field;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedLongField;
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface MapColumn {
 
-class MysqlAnnotatedLongField extends AnnotatedLongField {
+	Class<?> keyType();
 
-	MysqlAnnotatedLongField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
-	}
+	int keySize() default -1;
 
-	@Override
-	protected StringBuilder appendAnnotationProperties(StringBuilder stringBuilder) {
-		super.appendAnnotationProperties(stringBuilder);
-		if (this.getColumnAnnotation().autoIncrement())
-			stringBuilder.append(" AUTO_INCREMENT");
-		return stringBuilder;
-	}
+	Class<?> valueType();
+
+	int valueSize() default -1;
 }

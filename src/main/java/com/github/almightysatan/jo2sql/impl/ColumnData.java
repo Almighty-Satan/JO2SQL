@@ -20,26 +20,41 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
-import java.util.Arrays;
+public class ColumnData {
 
-public abstract class AbstractIndex {
+	private final String name;
+	private String sqlType;
+	private String sqlStatement;
+	private String replaceSql;
 
-	private final SerializableAttribute[] indexFields;
-	private final ColumnData[] columnData;
-
-	public AbstractIndex(SerializableAttribute... indexFields) {
-		this.indexFields = indexFields;
-		this.columnData = Arrays.stream(indexFields).flatMap(field -> Arrays.stream(field.getColumnData()))
-				.toArray(ColumnData[]::new);
+	public ColumnData(String name, String sqlType, String replaceSql) {
+		this.name = name;
+		this.sqlType = sqlType;
+		this.sqlStatement = sqlType;
+		this.replaceSql = replaceSql;
 	}
 
-	public abstract void appendIndex(StringBuilder builder, String delimiter);
-
-	public SerializableAttribute[] getIndexFields() {
-		return this.indexFields;
+	public String getName() {
+		return this.name;
 	}
 
-	public ColumnData[] getColumnData() {
-		return this.columnData;
+	public void setSqlType(String sqlType) {
+		this.sqlType = sqlType;
+	}
+
+	public String getSqlType() {
+		return this.sqlType;
+	}
+
+	public String getSqlStatement() {
+		return this.sqlStatement;
+	}
+
+	public void setSqlStatement(String sqlStatement) {
+		this.sqlStatement = sqlStatement;
+	}
+
+	public String getReplaceSql() {
+		return this.replaceSql;
 	}
 }

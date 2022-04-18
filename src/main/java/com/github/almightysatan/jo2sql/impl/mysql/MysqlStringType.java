@@ -20,20 +20,13 @@
 
 package com.github.almightysatan.jo2sql.impl.mysql;
 
-import java.lang.reflect.Field;
+import com.github.almightysatan.jo2sql.impl.types.StringType;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedStringField;
-
-class MysqlAnnotatedStringField extends AnnotatedStringField {
-
-	MysqlAnnotatedStringField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
-	}
+class MysqlStringType extends StringType {
 
 	@Override
-	protected String loadColumn(int size) {
+	public String getSqlType(int size) {
+		this.assertValidSize(size);
 		return "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_0900_as_cs'";
 	}
 }

@@ -20,21 +20,33 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
-import com.github.almightysatan.jo2sql.SqlSerializable;
+public class MapEntry {
 
-public class MapEntry implements SqlSerializable {
+	private final long id;
+	private final Object key;
+	private final Object value;
 
-	/*
-	 * 1. Primary Key columns of the class that declares this map
-	 * 
-	 * 2. A single column for the map key (no nested objects, maps, lists, arrays,
-	 * etc. as key
-	 * 
-	 * 3. Columns for the map value
-	 */
+	public MapEntry(Object key, Object value) {
+		this.id = 0;
+		this.key = key;
+		this.value = value;
+	}
 
-	@Override
-	public String getTableName() {
-		return "MapEntry";
+	public MapEntry(long id, Object key, Object value) {
+		this.id = id;
+		this.key = key;
+		this.value = value;
+	}
+
+	public long getId() {
+		return this.id;
+	}
+
+	public Object getKey() {
+		return this.key;
+	}
+
+	public Object getValue() {
+		return this.value;
 	}
 }

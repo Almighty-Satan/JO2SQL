@@ -20,51 +20,31 @@
 
 package com.github.almightysatan.jo2sql.impl.mysql;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.SerializableClass;
+import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.SerializableObject;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.Table;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
-import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
-import com.github.almightysatan.jo2sql.impl.fields.SimpleFieldSupplier;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public class MysqlProviderImpl extends SqlProviderImpl {
 
-	static final FieldSupplier LONG_FIELD_PROVIDER = new SimpleFieldSupplier(MysqlAnnotatedLongField::new, long.class,
-			Long.class);
-	static final FieldSupplier STRING_FIELD_PROVIDER = new FieldSupplier() {
-
-		@Override
-		public boolean isType(Field field) {
-			return field.getType() == String.class;
-		}
-
-		@Override
-		public AnnotatedField createField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-			return new MysqlAnnotatedStringField(provider, field, annotation);
-		}
-	};
+	static final DataType AI_LONG_TYPE = new MysqlAiLongType();
+	static final DataType STRING_TYPE = new MysqlStringType();
 
 	private final String url;
 	private final String user;
 	private final String password;
 	private final String schema;
 
-	public MysqlProviderImpl(Logger logger, List<FieldSupplier> types, String url, String user, String password,
+	public MysqlProviderImpl(Logger logger, List<DataType> types, String url, String user, String password,
 			String schema) {
-		super(logger, types = new ArrayList<>(types));
-		types.add(LONG_FIELD_PROVIDER);
-		types.add(STRING_FIELD_PROVIDER);
+		super(logger, types);
 		this.url = url;
 		this.user = user;
 		this.password = password;
@@ -78,14 +58,23 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	}
 
 	@Override
+	protected DataType getStringType() {
+		return STRING_TYPE;
+	}
+
+	@Override
+	protected DataType getAiLongType() {
+		return AI_LONG_TYPE;
+	}
+
+	@Override
 	protected String getLastInsertIdFunc() {
 		return "LAST_INSERT_ID";
 	}
 
 	@Override
-	protected <T extends SqlSerializable> Table<T> newTable(SerializableClass<T> type)
-			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException {
+	public <T> Table<T> newTable(SerializableObject<T> type) throws NoSuchMethodException, SecurityException,
+			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		return new MysqlTable<>(this, type);
 	}
 

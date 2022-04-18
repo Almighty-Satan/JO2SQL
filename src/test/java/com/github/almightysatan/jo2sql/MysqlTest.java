@@ -20,13 +20,18 @@
 
 package com.github.almightysatan.jo2sql;
 
-import java.util.function.BiConsumer;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import org.junit.jupiter.params.ParameterizedTest;
 
 public class MysqlTest {
 
-	public static void main(String[] args) {
-		for (BiConsumer<ApiTest, SqlProvider> test : ApiTest.tests)
-			test.accept(new ApiTest(), new SqlBuilder().mysql(System.getenv("mysqlUrl"), System.getenv("mysqlUser"),
-					System.getenv("mysqlPassword"), "jo2sqlTest"));
+	public static void main(String[] args)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		for (Method method : ApiTest.class.getDeclaredMethods())
+			if (method.getAnnotation(ParameterizedTest.class) != null)
+				method.invoke(new ApiTest(), new SqlBuilder().mysql(System.getenv("mysqlUrl"),
+						System.getenv("mysqlUser"), System.getenv("mysqlPassword"), "jo2sqlTest"));
 	}
 }

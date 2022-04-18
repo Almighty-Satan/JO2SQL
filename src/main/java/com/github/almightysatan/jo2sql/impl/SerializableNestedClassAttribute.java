@@ -18,36 +18,35 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl;
 
-import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.Table;
 
-public class AnnotatedSerializableField extends AnnotatedField {
+public class SerializableNestedClassAttribute implements SerializableAttribute {
 
+	private final SqlProviderImpl provider;
+	private final Class<SqlSerializable> type;
+	private ColumnData[] columnData;
 	private Table<SqlSerializable> table;
 	private PreparedReplace<SqlSerializable, Void> replace;
 	private PreparedSelect<SqlSerializable> primarySelect;
+	private String columnName;
 
-	public AnnotatedSerializableField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
-
-		if (annotation.primary())
-			throw new Error("The type of field that is part of the primary key can not be a nested object");
+	public SerializableNestedClassAttribute(SqlProviderImpl provider, Class<SqlSerializable> type, String columnName)
+			throws Throwable {
+		this.provider = provider;
+		this.type = type;
+		this.columnName = columnName;
+		this.loadColumns();
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	protected ColumnData[] loadColumns() throws Throwable {
-		this.table = this.getProvider().getTable((Class<SqlSerializable>) this.getField().getType());
+	protected void loadColumns() throws Throwable {
+		this.table = this.provider.getTable(this.type);
 		this.replace = this.table.prepareReplace();
 		this.primarySelect = this.table.preparePrimarySelect();
 
@@ -55,27 +54,42 @@ public class AnnotatedSerializableField extends AnnotatedField {
 		int i = 0;
 		for (ColumnData data : this.table.getType().getPrimaryKey().getColumnData()) {
 			dataArray[i++] = new ColumnData(this.getColumnName() + INTERNAL_COLUMN_DELIMITER + data.getName(),
-					data.getSqlType());
+					data.getSqlType(), data.getReplaceSql());
 		}
-
-		return dataArray;
+		this.columnData = dataArray;
 	}
 
 	@Override
-	public void setValues(PreparedStatement statement, int startIndex, Object value) throws Throwable {
-		for (AnnotatedField field : this.table.getType().getPrimaryKey().getIndexFields())
-			field.setValues(statement, startIndex++, value == null ? null : field.getField().get(value));
+	public void appendIndex(StringBuilder builder, String delimiter) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable {
+		for (SerializableAttribute field : this.table.getType().getPrimaryKey().getIndexFields())
+			field.serialize(statement, startIndex++,
+					value == null ? null : ((AnnotatedField) field).getField().get(value));
 		if (value != null)
-			this.getProvider().runDatabaseAction(this.replace.object((SqlSerializable) value));
+			this.provider.runDatabaseAction(this.replace.object((SqlSerializable) value));
 	}
 
 	@Override
-	public Object loadValue(String prefix, ResultSet result) throws Throwable {
+	public Object deserialize(String prefix, ResultSet result) throws Throwable {
 		Object[] values = new Object[this.table.getType().getPrimaryKey().getIndexFields().length];
 		int i = 0;
-		for (AnnotatedField field : this.table.getType().getPrimaryKey().getIndexFields())
-			values[i++] = field.loadValue(prefix + this.getColumnName() + INTERNAL_COLUMN_DELIMITER, result);
+		for (SerializableAttribute field : this.table.getType().getPrimaryKey().getIndexFields())
+			values[i++] = field.deserialize(prefix + this.getColumnName() + INTERNAL_COLUMN_DELIMITER, result);
 
-		return this.getProvider().runDatabaseAction(this.primarySelect.values(values));
+		return this.provider.runDatabaseAction(this.primarySelect.values(values));
+	}
+
+	@Override
+	public String getColumnName() {
+		return this.columnName;
+	}
+
+	@Override
+	public ColumnData[] getColumnData() {
+		return this.columnData;
 	}
 }

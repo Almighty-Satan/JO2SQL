@@ -72,4 +72,6 @@ public @interface Column {
 	boolean primary() default false;
 
 	int size() default -1;
+
+	Class<?> type() default void.class;
 }

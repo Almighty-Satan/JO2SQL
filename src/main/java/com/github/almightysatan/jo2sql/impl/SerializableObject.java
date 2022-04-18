@@ -18,33 +18,24 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl;
 
-import java.lang.reflect.Field;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+public interface SerializableObject<T> {
 
-public class AnnotatedIntField extends SimpleAnnotatedField {
+	T deserialize(ResultSet result) throws Throwable;
 
-	public AnnotatedIntField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
-	}
+	void serialize(CachedStatement statement, T instance) throws Throwable;
 
-	@Override
-	protected String loadColumn() {
-		return "INT";
-	}
+	String getName();
 
-	@Override
-	public void setValues(PreparedStatement statement, int index, Object value) throws Throwable {
-		statement.setInt(index, value == null ? 0 : (int) value);
-	}
+	Class<T> getType();
 
-	@Override
-	public Object loadValue(String prefix, ResultSet result) throws Throwable {
-		return result.getInt(prefix + this.getColumnName());
-	}
+	SerializableAttribute[] getAttributes();
+
+	SerializableAttribute[] getAttributes(String... keys);
+
+	PrimaryKey getPrimaryKey();
+
 }

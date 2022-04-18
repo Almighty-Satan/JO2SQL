@@ -18,33 +18,33 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl.types;
 
-import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.DataType;
 
-public abstract class AnnotatedLongField extends SimpleAnnotatedField {
+public abstract class StringType implements DataType {
 
-	public AnnotatedLongField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
+	@Override
+	public Class<?>[] getClasses() {
+		return new Class<?>[] { String.class };
+	}
+
+	protected void assertValidSize(int size) {
+		if (size <= 0)
+			throw new Error("Invalid String size: " + size);
 	}
 
 	@Override
-	protected String loadColumn() {
-		return "BIGINT";
+	public void serialize(PreparedStatement statement, int index, Object value) throws SQLException {
+		statement.setString(index, (String) value);
 	}
 
 	@Override
-	public void setValues(PreparedStatement statement, int index, Object value) throws Throwable {
-		statement.setLong(index, value == null ? 0L : (long) value);
-	}
-
-	@Override
-	public Object loadValue(String prefix, ResultSet result) throws Throwable {
-		return result.getLong(prefix + this.getColumnName());
+	public Object deserialize(String columnLabel, ResultSet result) throws SQLException {
+		return result.getString(columnLabel);
 	}
 }

@@ -22,15 +22,14 @@ package com.github.almightysatan.jo2sql.impl.mysql;
 
 import java.lang.reflect.InvocationTargetException;
 
-import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.SerializableClass;
+import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.impl.SerializableAttribute;
+import com.github.almightysatan.jo2sql.impl.SerializableObject;
 import com.github.almightysatan.jo2sql.impl.Table;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
-import com.github.almightysatan.jo2sql.impl.fields.ColumnData;
 
-public class MysqlTable<T extends SqlSerializable> extends Table<T> {
+public class MysqlTable<T> extends Table<T> {
 
-	MysqlTable(MysqlProviderImpl provider, SerializableClass<T> type) throws NoSuchMethodException, SecurityException,
+	MysqlTable(MysqlProviderImpl provider, SerializableObject<T> type) throws NoSuchMethodException, SecurityException,
 			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		super(provider, type);
 	}
@@ -51,15 +50,15 @@ public class MysqlTable<T extends SqlSerializable> extends Table<T> {
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;
-			for (AnnotatedField field : this.getType().getFields().values()) {
-				for (ColumnData column : field.getColumnData()) {
+			for (SerializableAttribute attribute : this.getType().getAttributes()) {
+				for (ColumnData column : attribute.getColumnData()) {
 					if (first)
 						first = false;
 					else
 						statement.append(",");
 					statement.append("`").append(column.getName()).append("`").append(column.getSqlStatement());
 				}
-				field.appendIndex(statement, ",");
+				attribute.appendIndex(statement, ",");
 			}
 			this.getType().getPrimaryKey().appendIndex(statement, ",");
 			statement.append(");");

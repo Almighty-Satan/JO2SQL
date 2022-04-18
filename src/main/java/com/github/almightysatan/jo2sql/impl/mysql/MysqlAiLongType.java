@@ -18,22 +18,17 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.sqlite;
+package com.github.almightysatan.jo2sql.impl.mysql;
 
-import java.lang.reflect.Field;
+import com.github.almightysatan.jo2sql.impl.types.LongType;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedStringField;
+class MysqlAiLongType extends LongType {
 
-class SqliteAnnotatedStringField extends AnnotatedStringField {
-
-	SqliteAnnotatedStringField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
+	MysqlAiLongType() {
 	}
 
 	@Override
-	protected String loadColumn(int size) {
-		return "VARCHAR(" + size + ")";
+	public String getSqlType(int size) {
+		return "BIGINT AUTO_INCREMENT";
 	}
 }

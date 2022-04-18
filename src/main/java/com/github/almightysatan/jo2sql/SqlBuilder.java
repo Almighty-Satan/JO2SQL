@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
 import com.github.almightysatan.jo2sql.impl.mysql.MysqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.sqlite.SqliteProviderImpl;
 import com.github.almightysatan.jo2sql.logger.CoutLogger;
@@ -42,15 +41,15 @@ public class SqlBuilder {
 	private static final Logger DEFAULT_LOGGER = new CoutLogger();
 
 	private Logger logger = DEFAULT_LOGGER;
-	private List<FieldSupplier> fieldTypes = new ArrayList<>();
+	private List<DataType> dataTypes = new ArrayList<>();
 
-	public SqlBuilder addFieldTypes(FieldSupplier... fieldTypes) {
-		this.fieldTypes.addAll(Arrays.asList(fieldTypes));
+	public SqlBuilder addDataTypes(DataType... dataTypes) {
+		this.dataTypes.addAll(Arrays.asList(dataTypes));
 		return this;
 	}
 
-	public SqlBuilder addFieldTypes(List<FieldSupplier> fieldTypes) {
-		this.fieldTypes.addAll(fieldTypes);
+	public SqlBuilder addDataTypes(List<DataType> dataTypes) {
+		this.dataTypes.addAll(dataTypes);
 		return this;
 	}
 
@@ -80,7 +79,7 @@ public class SqlBuilder {
 	 * @return An {@link SqlProvider}
 	 */
 	public SqlProvider mysql(String url, String user, String password, String schema) {
-		return new MysqlProviderImpl(this.logger, this.fieldTypes, url, user, password, schema);
+		return new MysqlProviderImpl(this.logger, new ArrayList<>(this.dataTypes), url, user, password, schema);
 	}
 
 	/**
@@ -90,7 +89,7 @@ public class SqlBuilder {
 	 * @return An {@link SqlProvider}
 	 */
 	public SqlProvider sqlite() {
-		return new SqliteProviderImpl(this.logger, this.fieldTypes);
+		return new SqliteProviderImpl(this.logger, new ArrayList<>(this.dataTypes));
 	}
 
 	/**
@@ -100,6 +99,6 @@ public class SqlBuilder {
 	 * @return An {@link SqlProvider}
 	 */
 	public SqlProvider sqlite(File file) {
-		return new SqliteProviderImpl(this.logger, this.fieldTypes, file);
+		return new SqliteProviderImpl(this.logger, new ArrayList<>(this.dataTypes), file);
 	}
 }

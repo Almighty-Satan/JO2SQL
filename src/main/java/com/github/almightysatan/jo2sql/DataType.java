@@ -18,23 +18,18 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql;
 
-import java.lang.reflect.Field;
+public interface DataType extends SerializableType {
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+	Class<?>[] getClasses();
 
-abstract class SimpleAnnotatedField extends AnnotatedField {
+	String getSqlType(int size);
 
-	SimpleAnnotatedField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
+	default boolean isOfType(Class<?> type) {
+		for (Class<?> clazz : this.getClasses())
+			if (clazz == type)
+				return true;
+		return false;
 	}
-
-	@Override
-	protected final ColumnData[] loadColumns() {
-		return new ColumnData[] { new ColumnData(this.getField().getName(), this.loadColumn()) };
-	}
-
-	protected abstract String loadColumn();
 }

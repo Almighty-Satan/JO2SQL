@@ -24,26 +24,25 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import com.github.almightysatan.jo2sql.Selector;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
 
 public class PrimaryKey extends AbstractIndex {
 
 	private Selector selector;
 
-	public PrimaryKey(AnnotatedField... indexFields) {
+	public PrimaryKey(SerializableAttribute... indexFields) {
 		super(indexFields);
 	}
 
 	@Override
 	public void appendIndex(StringBuilder builder, String delimiter) {
 		builder.append(delimiter).append("PRIMARY KEY (`").append(Arrays.stream(this.getIndexFields())
-				.map(AnnotatedField::getColumnName).collect(Collectors.joining("`,`"))).append("`)");
+				.map(SerializableAttribute::getColumnName).collect(Collectors.joining("`,`"))).append("`)");
 	}
 
 	public Selector getSelector() {
 		if (this.selector == null)
-			this.selector = Selector.eqAnd(
-					Arrays.stream(this.getIndexFields()).map(AnnotatedField::getColumnName).toArray(String[]::new));
+			this.selector = Selector.eqAnd(Arrays.stream(this.getIndexFields())
+					.map(SerializableAttribute::getColumnName).toArray(String[]::new));
 		return this.selector;
 	}
 }

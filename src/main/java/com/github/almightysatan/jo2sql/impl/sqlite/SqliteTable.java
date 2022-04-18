@@ -23,17 +23,22 @@ package com.github.almightysatan.jo2sql.impl.sqlite;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.SerializableClass;
+import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.impl.SerializableAttribute;
+import com.github.almightysatan.jo2sql.impl.SerializableObject;
 import com.github.almightysatan.jo2sql.impl.Table;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
-import com.github.almightysatan.jo2sql.impl.fields.ColumnData;
 
-public class SqliteTable<T extends SqlSerializable> extends Table<T> {
+public class SqliteTable<T> extends Table<T> {
 
-	SqliteTable(SqliteProviderImpl provider, SerializableClass<T> type) throws NoSuchMethodException, SecurityException,
-			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	SqliteTable(SqliteProviderImpl provider, SerializableObject<T> type)
+			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException {
 		super(provider, type);
+	}
+
+	@Override
+	protected String getFullName(String name) {
+		return "`" + name + "`";
 	}
 
 	@Override
@@ -46,15 +51,15 @@ public class SqliteTable<T extends SqlSerializable> extends Table<T> {
 
 			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
 			boolean first = true;
-			for (AnnotatedField field : this.getType().getFields().values()) {
-				for (ColumnData column : field.getColumnData()) {
+			for (SerializableAttribute attribute : this.getType().getAttributes()) {
+				for (ColumnData column : attribute.getColumnData()) {
 					if (first)
 						first = false;
 					else
 						statement.append(",");
 					statement.append("`").append(column.getName()).append("`").append(column.getSqlStatement());
 				}
-				field.appendIndex(statement, ",");
+				attribute.appendIndex(statement, ",");
 			}
 			this.getType().getPrimaryKey().appendIndex(statement, ",");
 			statement.append(");");

@@ -18,33 +18,33 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl.types;
 
-import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.DataType;
 
-public class AnnotatedBoolField extends SimpleAnnotatedField {
+public class IntType implements DataType {
 
-	public AnnotatedBoolField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
+	@Override
+	public Class<?>[] getClasses() {
+		return new Class<?>[] { int.class, Integer.class };
 	}
 
 	@Override
-	protected String loadColumn() {
-		return "BOOL";
+	public String getSqlType(int size) {
+		return "INT";
 	}
 
 	@Override
-	public void setValues(PreparedStatement statement, int index, Object value) throws Throwable {
-		statement.setBoolean(index, value == null ? false : (boolean) value);
+	public void serialize(PreparedStatement statement, int index, Object value) throws SQLException {
+		statement.setInt(index, value == null ? 0 : (int) value);
 	}
 
 	@Override
-	public Object loadValue(String prefix, ResultSet result) throws Throwable {
-		return result.getBoolean(prefix + this.getColumnName());
+	public Object deserialize(String columnLabel, ResultSet result) throws SQLException {
+		return result.getInt(columnLabel);
 	}
 }

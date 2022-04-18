@@ -18,53 +18,54 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 
-public abstract class AnnotatedField {
+public class AnnotatedField implements SerializableAttribute {
 
-	static final char INTERNAL_COLUMN_DELIMITER = '#';
-
-	private SqlProviderImpl provider;
+	private final SqlProviderImpl provider;
 	private final Field field;
 	private final Column columnAnnotation;
+	private final Class<?> type;
+	private final SerializableAttribute attribute;
 	private final ColumnData[] columnData;
 
-	public AnnotatedField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
+	public AnnotatedField(SqlProviderImpl provider, Field field, Column annotation, SerializableAttribute attribute)
+			throws Throwable {
 		this.provider = provider;
 		this.field = field;
 		this.field.setAccessible(true);
 		this.columnAnnotation = annotation;
-		this.columnData = this.createColumnData();
+		this.attribute = attribute;
+
+		if (annotation.type() == void.class)
+			this.type = field.getType();
+		else {
+			if (field.getType().isAssignableFrom(annotation.type()))
+				this.type = annotation.type();
+			else
+				throw new Error(String.format("%s is not a superclass of %s", field.getType(), annotation.type()));
+		}
 
 		if (annotation.value().contains(String.valueOf(AnnotatedField.INTERNAL_COLUMN_DELIMITER)))
 			throw new Error(String.format("Column name %s in %s contains an invalid char", annotation.value(),
 					field.getDeclaringClass().getName()));
+
+		this.columnData = this.attribute.getColumnData();
+		for (ColumnData data : this.columnData) {
+			this.processColumnData(data);
+			data.setSqlStatement(
+					this.appendAnnotationProperties(new StringBuilder().append(data.getSqlType())).toString());
+		}
 	}
 
-	private ColumnData[] createColumnData() throws Throwable {
-		ColumnData[] columns = this.loadColumns();
-		for (ColumnData data : columns)
-			data.sqlStatement = this.appendAnnotationProperties(new StringBuilder().append(data.getSqlType()))
-					.toString();
-		return columns;
+	protected void processColumnData(ColumnData data) {
 	}
-
-	/**
-	 * Loads the {@link ColumnData} for this field
-	 * 
-	 * @return An array of {@link ColumnData} containing information about the
-	 *         columns
-	 * @throws Throwable Depending on the implementation this method may throw a
-	 *                   number of different exceptions
-	 */
-	protected abstract ColumnData[] loadColumns() throws Throwable;
 
 	protected StringBuilder appendAnnotationProperties(StringBuilder stringBuilder) {
 		if (this.columnAnnotation.notNull())
@@ -75,25 +76,22 @@ public abstract class AnnotatedField {
 		return stringBuilder;
 	}
 
+	@Override
 	public void appendIndex(StringBuilder builder, String delimiter) {
 		if (this.columnAnnotation.unique())
 			builder.append(delimiter).append("UNIQUE INDEX `").append(this.columnAnnotation.value())
 					.append("_UNIQUE` (`").append(this.columnAnnotation.value()).append("` ASC) VISIBLE");
 	}
 
-	/**
-	 * Sets the parameters of a {@link PreparedStatement} to the value of this
-	 * field. This method may invoke database requests to save nested objects to the
-	 * database.
-	 * 
-	 * @param statement  The {@link PreparedStatement}
-	 * @param startIndex The index where the first parameter should be set
-	 * @param value      The value that should be loaded into the
-	 *                   {@link PreparedStatement}
-	 * @throws Throwable Depending on the implementation this method may throw a
-	 *                   number of different exceptions
-	 */
-	public abstract void setValues(PreparedStatement statement, int startIndex, Object value) throws Throwable;
+	@Override
+	public void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable {
+		this.attribute.serialize(statement, startIndex, value);
+	}
+
+	@Override
+	public Object deserialize(String prefix, ResultSet result) throws Throwable {
+		return this.attribute.deserialize(prefix, result);
+	}
 
 	/**
 	 * Sets the value of this field to an object that is created from the contents
@@ -108,43 +106,36 @@ public abstract class AnnotatedField {
 	 * @throws Throwable Depending on the implementation this method may throw a
 	 *                   number of different exceptions
 	 */
-	public void loadValue(String prefix, ResultSet result, Object instance) throws Throwable {
-		this.field.set(instance, this.loadValue(prefix, result));
+	public void setFieldValue(String prefix, ResultSet result, Object instance) throws Throwable {
+		this.field.set(instance, this.deserialize(prefix, result));
 	}
 
-	/**
-	 * Creates an object that is created from the contents of the given
-	 * {@link ResultSet}. This method may invoke further database requests to load
-	 * nested objects.
-	 * 
-	 * @param prefix A prefix that is added to the column name when loading values
-	 *               from the {@link ResultSet}. May be empty but should not be null
-	 * @param result The {@link ResultSet}
-	 * @throws Throwable Depending on the implementation this method may throw a
-	 *                   number of different exceptions
-	 */
-	public abstract Object loadValue(String prefix, ResultSet result) throws Throwable;
+	public Object getFieldValue(Object instance) throws IllegalArgumentException, IllegalAccessException {
+		return instance == null ? null : this.field.get(instance);
+	}
 
 	protected SqlProviderImpl getProvider() {
 		return this.provider;
 	}
 
-	protected Field getField() {
+	public Field getField() {
 		return this.field;
 	}
 
-	public Object getValue(Object instance) throws IllegalArgumentException, IllegalAccessException {
-		return instance == null ? null : this.field.get(instance);
+	public Class<?> getType() {
+		return this.type;
 	}
 
 	protected Column getColumnAnnotation() {
 		return this.columnAnnotation;
 	}
 
+	@Override
 	public String getColumnName() {
 		return this.columnAnnotation.value();
 	}
 
+	@Override
 	public ColumnData[] getColumnData() {
 		return this.columnData;
 	}

@@ -38,7 +38,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.github.almightysatan.jo2sql.Column;
+import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.DatabaseAction;
+import com.github.almightysatan.jo2sql.MapColumn;
 import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
@@ -46,42 +48,30 @@ import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.Selector;
 import com.github.almightysatan.jo2sql.SqlProvider;
 import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedBoolField;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedIntField;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedSerializableField;
-import com.github.almightysatan.jo2sql.impl.fields.FieldSupplier;
-import com.github.almightysatan.jo2sql.impl.fields.SimpleFieldSupplier;
+import com.github.almightysatan.jo2sql.impl.types.BoolType;
+import com.github.almightysatan.jo2sql.impl.types.IntType;
+import com.github.almightysatan.jo2sql.impl.types.LongType;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public abstract class SqlProviderImpl implements SqlProvider {
 
-	private static final List<FieldSupplier> DATA_TYPES = Arrays.asList(
-			new SimpleFieldSupplier(AnnotatedBoolField::new, boolean.class, Boolean.class),
-			new SimpleFieldSupplier(AnnotatedIntField::new, int.class, Integer.class), new FieldSupplier() {
+	public static final DataType BOOL_TYPE = new BoolType();
+	public static final DataType INT_TYPE = new IntType();
+	public static final DataType LONG_TYPE = new LongType();
 
-				@Override
-				public boolean isType(Field field) {
-					return SqlSerializable.class.isAssignableFrom(field.getType());
-				}
+	private static final List<DataType> UNIVERSAL_DATA_TYPES = Arrays.asList(BOOL_TYPE, INT_TYPE, LONG_TYPE);
 
-				@Override
-				public AnnotatedField createField(SqlProviderImpl provider, Field field, Column annotation)
-						throws Throwable {
-					return new AnnotatedSerializableField(provider, field, annotation);
-				}
-			});
-
-	private final List<FieldSupplier> types;
+	private final List<DataType> types;
 	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 	private final Logger logger;
 	private final Map<Class<?>, Table<?>> tables = new HashMap<>();
 	private Connection connection;
 	private CachedStatement selectLastInsertIdStatement;
 
-	public SqlProviderImpl(Logger logger, List<FieldSupplier> types) {
+	public SqlProviderImpl(Logger logger, List<DataType> types) {
 		this.logger = logger;
-		types.addAll(DATA_TYPES);
+		types.addAll(UNIVERSAL_DATA_TYPES);
+		types.add(this.getStringType());
 		this.types = types;
 		this.selectLastInsertIdStatement = this.prepareStatement("SELECT " + this.getLastInsertIdFunc() + "();");
 	}
@@ -102,6 +92,10 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	protected abstract Connection createConnection() throws SQLException;
+
+	protected abstract DataType getStringType();
+
+	protected abstract DataType getAiLongType();
 
 	protected abstract String getLastInsertIdFunc();
 
@@ -126,16 +120,54 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		}
 	}
 
-	protected abstract <T extends SqlSerializable> Table<T> newTable(SerializableClass<T> type)
-			throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException;
+	public abstract <T> Table<T> newTable(SerializableObject<T> type) throws NoSuchMethodException, SecurityException,
+			InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException;
 
-	AnnotatedField createAnnotatedField(Field field, Column annotation) throws Throwable {
-		for (FieldSupplier type : this.types)
-			if (type.isType(field))
-				return type.createField(this, field, annotation);
-		throw new Error(
-				String.format("Unsupported type of field %s in %s", field.getName(), field.getDeclaringClass()));
+	public DataType getDataType(Class<?> type) {
+		throw new UnsupportedOperationException();
+	}
+
+	public SerializableAttribute createSerializableAttribute(Class<?> clazz, String tableName, String columnName,
+			int size) throws Throwable {
+		for (DataType type : this.types)
+			if (type.isOfType(clazz))
+				return new SimpleSerializableAttribute(type, tableName, columnName, size);
+
+		throw new Error(String.format("Unsupported type of field %s in %s", columnName, size));
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public SerializableAttribute createSerializableAttribute(Field field, Column annotation,
+			SerializableObject<?> parent) throws Throwable {
+		Class<?> clazz = annotation.type() == void.class ? field.getType() : annotation.type();
+		String columnName = annotation.value();
+		int size = annotation.size();
+
+		if (annotation.autoIncrement()) {
+			DataType aiLongType = this.getAiLongType();
+			if (aiLongType.isOfType(clazz))
+				return new SimpleSerializableAttribute(aiLongType, parent.getName(), columnName, size);
+			else
+				throw new Error(
+						String.format("Invalid auto increment type in class %s", field.getDeclaringClass().getName()));
+		}
+
+		if (SqlSerializable.class.isAssignableFrom(clazz))
+			return new SerializableNestedClassAttribute(this, (Class<SqlSerializable>) clazz, columnName);
+
+		MapColumn mapAnnotation = field.getAnnotation(MapColumn.class);
+		if (mapAnnotation != null && Map.class.isAssignableFrom(field.getType()))
+			return new AnnotatedField(this, field, annotation,
+					new SerializableMapEntryAttribute(this, annotation.type(), mapAnnotation.keyType(),
+							mapAnnotation.keySize(), mapAnnotation.valueType(), mapAnnotation.valueSize(),
+							annotation.value(), parent));
+
+		return this.createSerializableAttribute(clazz, parent.getName(), columnName, size);
+	}
+
+	public AnnotatedField createAnnotatedField(Field field, Column annotation, SerializableObject<?> parent)
+			throws Throwable {
+		return new AnnotatedField(this, field, annotation, this.createSerializableAttribute(field, annotation, parent));
 	}
 
 	@Override

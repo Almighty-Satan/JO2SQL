@@ -22,10 +22,10 @@ package com.github.almightysatan.jo2sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,9 +33,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class ApiTest {
-
-	static final List<BiConsumer<ApiTest, SqlProvider>> tests = Arrays.asList(ApiTest::testReplaceSelect,
-			ApiTest::testNestedObject, ApiTest::testInheritance, ApiTest::testAi, ApiTest::testStringFuckery);
 
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
@@ -109,6 +106,38 @@ public class ApiTest {
 				.completeUnsafe();
 
 		assertEquals(object0, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testObjectDelete(SqlProvider sql) {
+		TestObject object = new TestObject("DeleteMeDaddy", true, 666);
+		sql.prepareAiReplace(TestObject.class).object(object).queue();
+		sql.prepareObjectDelete(TestObject.class).object(object).queue();
+
+		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object.string)
+				.completeUnsafe();
+
+		assertNull(deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testStringMap(SqlProvider sql) {
+		Map<String, String> map = new HashMap<>();
+		map.put("abc", "Hello");
+		map.put("def", "World");
+		StringMapTest object = new StringMapTest(map);
+		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+
+		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+				.completeUnsafe();
+
+		assertEquals(object, deserialized);
 
 		sql.terminate();
 	}

@@ -20,30 +20,40 @@
 
 package com.github.almightysatan.jo2sql.impl.sqlite;
 
-import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Types;
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedLongField;
+import com.github.almightysatan.jo2sql.impl.types.LongType;
 
-class SqliteAnnotatedLongField extends AnnotatedLongField {
+/**
+ * This is an EXTREMELY hacky implementation of an auto increment column that
+ * does not need to be the primary key in order to work. If anyone has a better
+ * idea or knows how to properly do this feel free to message me (or just create
+ * a pull request)
+ * 
+ * @author Almighty-Satan
+ */
+class SqliteAiLongType extends LongType {
 
-	SqliteAnnotatedLongField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable {
-		super(provider, field, annotation);
+	SqliteAiLongType() {
 	}
 
 	@Override
-	protected String loadColumn() {
-		return this.getColumnAnnotation().autoIncrement() ? "INTEGER" : super.getColumnName();
+	public String getSqlType(int size) {
+		return "BIGINT";
 	}
 
 	@Override
-	public void setValues(PreparedStatement statement, int index, Object value) throws Throwable {
-		if (this.getColumnAnnotation().autoIncrement() && (value == null || (long) value == 0))
+	public void serialize(PreparedStatement statement, int index, Object value) throws SQLException {
+		if (value == null || (long) value == 0)
 			statement.setNull(index, Types.INTEGER);
 		else
-			super.setValues(statement, index, value);
+			super.serialize(statement, index, value);
+	}
+
+	@Override
+	public String getPreparedReplaceSql(String columnName, String tableName) {
+		return "IFNULL(?, (SELECT IFNULL(MAX(`" + columnName + "`) + 1, 1) FROM `" + tableName + "`))";
 	}
 }

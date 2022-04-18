@@ -18,16 +18,22 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl;
 
-import java.lang.reflect.Field;
+public class StringUtil {
 
-import com.github.almightysatan.jo2sql.Column;
-import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+	private static final int UNICODE_ZERO = 0x30;
+	private static final int UNICODE_NINE = 0x39;
+	private static final int UNICODE_UPPERCASE_A = 0x41;
+	private static final int UNICODE_UPPERCASE_Z = 0x5A;
+	private static final int UNICODE_LOWERCASE_A = 0x61;
+	private static final int UNICODE_LOWERCASE_Z = 0x7A;
 
-public interface FieldSupplier {
-
-	boolean isType(Field field);
-
-	AnnotatedField createField(SqlProviderImpl provider, Field field, Column annotation) throws Throwable;
+	public static boolean isAlphanumeric(String input) {
+		for (char c : input.toCharArray())
+			if ((c < UNICODE_ZERO || c > UNICODE_NINE) && (c < UNICODE_UPPERCASE_A || c > UNICODE_UPPERCASE_Z)
+					&& (c < UNICODE_LOWERCASE_A || c > UNICODE_LOWERCASE_Z))
+				return false;
+		return true;
+	}
 }

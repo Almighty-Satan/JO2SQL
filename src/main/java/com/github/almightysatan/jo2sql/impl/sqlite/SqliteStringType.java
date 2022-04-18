@@ -18,28 +18,15 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.fields;
+package com.github.almightysatan.jo2sql.impl.sqlite;
 
-public class ColumnData {
+import com.github.almightysatan.jo2sql.impl.types.StringType;
 
-	String name;
-	private String sqlType;
-	String sqlStatement;
+class SqliteStringType extends StringType {
 
-	ColumnData(String name, String sqlType) {
-		this.name = name;
-		this.sqlType = sqlType;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public String getSqlType() {
-		return this.sqlType;
-	}
-
-	public String getSqlStatement() {
-		return this.sqlStatement;
+	@Override
+	public String getSqlType(int size) {
+		this.assertValidSize(size);
+		return "VARCHAR(" + size + ")";
 	}
 }

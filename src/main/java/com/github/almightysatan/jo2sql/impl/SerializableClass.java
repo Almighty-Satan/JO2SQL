@@ -31,14 +31,14 @@ import java.util.Map;
 
 import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.SqlSerializable;
-import com.github.almightysatan.jo2sql.impl.fields.AnnotatedField;
 
-public class SerializableClass<T extends SqlSerializable> {
+public class SerializableClass<T extends SqlSerializable> implements SerializableObject<T> {
 
 	private final Class<T> type;
 	private final Constructor<T> constructor;
 	private final String name;
-	private final Map<String, AnnotatedField> fields = new HashMap<>();
+	private final Map<String, AnnotatedField> fieldMap = new HashMap<>();
+	private final AnnotatedField[] fields;
 	private final PrimaryKey primaryKey;
 	private AnnotatedField aiField;
 
@@ -51,9 +51,10 @@ public class SerializableClass<T extends SqlSerializable> {
 		List<AnnotatedField> primaryFields = new ArrayList<>();
 		this.loadFields(provider, primaryFields, type);
 
-		if (this.fields.size() == 0)
+		if (this.fieldMap.size() == 0)
 			throw new Error("No columns found in class: " + type.getName());
 
+		this.fields = this.fieldMap.values().toArray(new AnnotatedField[this.fieldMap.size()]);
 		this.primaryKey = new PrimaryKey(primaryFields.toArray(new AnnotatedField[primaryFields.size()]));
 		if (this.primaryKey.getIndexFields().length == 0)
 			throw new Error("Missing primary key in table " + this.getName());
@@ -68,7 +69,13 @@ public class SerializableClass<T extends SqlSerializable> {
 		for (Field field : clazz.getDeclaredFields()) {
 			Column annotation = field.getAnnotation(Column.class);
 			if (annotation != null && !Modifier.isStatic(field.getModifiers())) {
-				AnnotatedField annotatedField = provider.createAnnotatedField(field, annotation);
+				AnnotatedField annotatedField;
+				try {
+					annotatedField = provider.createAnnotatedField(field, annotation, this);
+				} catch (Throwable t) {
+					throw new Error(String.format("An error occured while trying to load field %s in class %s",
+							field.getName(), field.getDeclaringClass().getName()), t);
+				}
 				if (annotation.primary() || annotation.autoIncrement())
 					primaryFields.add(annotatedField);
 
@@ -80,7 +87,7 @@ public class SerializableClass<T extends SqlSerializable> {
 								String.format("Multiple Auto Increment columns in class %s", this.type.getName()));
 				}
 
-				if (this.fields.put(annotation.value(), annotatedField) != null)
+				if (this.fieldMap.put(annotation.value(), annotatedField) != null)
 					throw new Error(String.format("Duplicate column name: %s in class %s", annotation.value(),
 							this.type.getName()));
 			}
@@ -90,33 +97,46 @@ public class SerializableClass<T extends SqlSerializable> {
 			this.loadFields(provider, primaryFields, clazz.getSuperclass());
 	}
 
-	AnnotatedField[] getFieldsByKey(String... keys) {
-		AnnotatedField[] fields = new AnnotatedField[keys.length];
-		for (int i = 0; i < keys.length; i++)
-			if ((fields[i] = this.fields.get(keys[i])) == null)
-				throw new Error(String.format("Unknown key '%s' for table %s", keys[i], this.name));
-		return fields;
-	}
-
-	public T newInstance(ResultSet result) throws Throwable {
+	@Override
+	public T deserialize(ResultSet result) throws Throwable {
 		T instance = this.constructor.newInstance();
-		for (AnnotatedField field : this.fields.values())
-			field.loadValue("", result, instance);
+		for (AnnotatedField field : this.fieldMap.values())
+			field.setFieldValue("", result, instance);
 		return instance;
 	}
 
-	public Class<T> getType() {
-		return this.type;
+	@Override
+	public void serialize(CachedStatement statement, T instance) throws Throwable {
+		int i = 0;
+		for (AnnotatedField field : this.fields)
+			statement.setParameter(i++, field, field.getFieldValue(instance));
 	}
 
+	@Override
 	public String getName() {
 		return this.name;
 	}
 
-	public Map<String, AnnotatedField> getFields() {
+	@Override
+	public Class<T> getType() {
+		return this.type;
+	}
+
+	@Override
+	public SerializableAttribute[] getAttributes() {
 		return this.fields;
 	}
 
+	@Override
+	public SerializableAttribute[] getAttributes(String... keys) {
+		SerializableAttribute[] fields = new SerializableAttribute[keys.length];
+		for (int i = 0; i < keys.length; i++)
+			if ((fields[i] = this.fieldMap.get(keys[i])) == null)
+				throw new Error(String.format("Unknown key '%s' for table %s", keys[i], this.name));
+		return fields;
+	}
+
+	@Override
 	public PrimaryKey getPrimaryKey() {
 		return this.primaryKey;
 	}
