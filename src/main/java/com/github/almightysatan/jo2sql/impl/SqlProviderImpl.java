@@ -101,7 +101,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	protected abstract String getLastInsertIdFunc();
 
 	@SuppressWarnings("unchecked")
-	public synchronized <T extends SqlSerializable> TableImpl<T> getOrCreateTable(Class<T> type) {
+	public synchronized <T> TableImpl<T> getOrCreateTable(Class<T> type) {
 		if (this.tables.containsKey(type))
 			return (TableImpl<T>) this.tables.get(type);
 		else {
@@ -154,8 +154,8 @@ public abstract class SqlProviderImpl implements SqlProvider {
 						String.format("Invalid auto increment type in class %s", field.getDeclaringClass().getName()));
 		}
 
-		if (SqlSerializable.class.isAssignableFrom(clazz))
-			return new SerializableNestedClassAttribute(this, (Class<SqlSerializable>) clazz, columnName);
+		if (clazz.isAnnotationPresent(SqlSerializable.class))
+			return new SerializableNestedClassAttribute(this, clazz, columnName);
 
 		MapColumn mapAnnotation = field.getAnnotation(MapColumn.class);
 		if (mapAnnotation != null && Map.class.isAssignableFrom(field.getType()))
@@ -173,7 +173,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	@Override
-	public <T extends SqlSerializable> DatabaseAction<Void> createIfNecessary(Class<T> type) {
+	public <T> DatabaseAction<Void> createIfNecessary(Class<T> type) {
 		TableImpl<T> table = this.getOrCreateTable(type);
 		return this.createDatabaseAction(() -> {
 			table.createIfNecessary();
@@ -182,42 +182,42 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedReplace<T, Void> prepareReplace(Class<T> type) {
+	public <T> PreparedReplace<T, Void> prepareReplace(Class<T> type) {
 		return this.getOrCreateTable(type).prepareReplace();
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedReplace<T, Long> prepareAiReplace(Class<T> type) {
+	public <T> PreparedReplace<T, Long> prepareAiReplace(Class<T> type) {
 		return this.getOrCreateTable(type).prepareAiReplace();
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedSelect<T> preparePrimarySelect(Class<T> type) {
+	public <T> PreparedSelect<T> preparePrimarySelect(Class<T> type) {
 		return this.getOrCreateTable(type).preparePrimarySelect();
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector) {
+	public <T> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector) {
 		return this.getOrCreateTable(type).prepareSingleSelect(selector);
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector) {
+	public <T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector) {
 		return this.getOrCreateTable(type).prepareMultiSelect(selector);
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type) {
+	public <T> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type) {
 		return this.getOrCreateTable(type).prepareObjectDelete();
 	}
 
 	@Override
-	public <T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, Selector selector) {
+	public <T> PreparedDelete prepareDelete(Class<T> type, Selector selector) {
 		return this.getOrCreateTable(type).prepareDelete(selector);
 	}
 
 	@Override
-	public <T extends SqlSerializable> Table<T> getTable(Class<T> type) {
+	public <T> Table<T> getTable(Class<T> type) {
 		return new Table<T>() {
 
 			private TableImpl<T> table = SqlProviderImpl.this.getOrCreateTable(type);

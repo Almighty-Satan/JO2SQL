@@ -24,23 +24,23 @@ import java.util.concurrent.TimeUnit;
 
 public interface SqlProvider {
 
-	<T extends SqlSerializable> DatabaseAction<Void> createIfNecessary(Class<T> type);
+	<T> DatabaseAction<Void> createIfNecessary(Class<T> type);
 
-	<T extends SqlSerializable> PreparedReplace<T, Void> prepareReplace(Class<T> type);
+	<T> PreparedReplace<T, Void> prepareReplace(Class<T> type);
 
-	<T extends SqlSerializable> PreparedReplace<T, Long> prepareAiReplace(Class<T> type);
+	<T> PreparedReplace<T, Long> prepareAiReplace(Class<T> type);
 
-	<T extends SqlSerializable> PreparedSelect<T> preparePrimarySelect(Class<T> type);
+	<T> PreparedSelect<T> preparePrimarySelect(Class<T> type);
 
-	<T extends SqlSerializable> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector);
+	<T> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector);
 
-	<T extends SqlSerializable> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector);
+	<T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector);
 
-	<T extends SqlSerializable> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type);
+	<T> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type);
 
-	<T extends SqlSerializable> PreparedDelete prepareDelete(Class<T> type, Selector selector);
+	<T> PreparedDelete prepareDelete(Class<T> type, Selector selector);
 
-	<T extends SqlSerializable> Table<T> getTable(Class<T> type);
+	<T> Table<T> getTable(Class<T> type);
 
 	void terminate();
 

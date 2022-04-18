@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class StringMapTest implements SqlSerializable {
+@SqlSerializable("StringMap")
+public class StringMapTest {
 
 	@Column(value = "id", autoIncrement = true, primary = true)
 	long id;
@@ -60,10 +61,5 @@ public class StringMapTest implements SqlSerializable {
 	@Override
 	public String toString() {
 		return "StringMapTest [id=" + this.id + ", map=" + this.map + "]";
-	}
-
-	@Override
-	public String getTableName() {
-		return "StringMap";
 	}
 }

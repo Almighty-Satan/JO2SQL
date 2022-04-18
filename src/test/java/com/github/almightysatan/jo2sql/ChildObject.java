@@ -22,7 +22,8 @@ package com.github.almightysatan.jo2sql;
 
 import java.util.Objects;
 
-public class ChildObject implements SqlSerializable {
+@SqlSerializable("ChildObject")
+public class ChildObject {
 
 	@Column(value = "firstName", size = 100, primary = true)
 	public String firstName;
@@ -65,10 +66,5 @@ public class ChildObject implements SqlSerializable {
 	public String toString() {
 		return "ChildObject [firstName=" + this.firstName + ", lastName=" + this.lastName + ", age=" + this.age
 				+ ", child=" + this.child + "]";
-	}
-
-	@Override
-	public String getTableName() {
-		return "ChildObject";
 	}
 }

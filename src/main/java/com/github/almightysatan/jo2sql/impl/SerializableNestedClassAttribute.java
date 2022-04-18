@@ -25,19 +25,18 @@ import java.sql.ResultSet;
 
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
-import com.github.almightysatan.jo2sql.SqlSerializable;
 
-public class SerializableNestedClassAttribute implements SerializableAttribute {
+public class SerializableNestedClassAttribute<T> implements SerializableAttribute {
 
 	private final SqlProviderImpl provider;
-	private final Class<SqlSerializable> type;
+	private final Class<T> type;
 	private ColumnData[] columnData;
-	private TableImpl<SqlSerializable> table;
-	private PreparedReplace<SqlSerializable, Void> replace;
-	private PreparedSelect<SqlSerializable> primarySelect;
+	private TableImpl<T> table;
+	private PreparedReplace<T, Void> replace;
+	private PreparedSelect<T> primarySelect;
 	private String columnName;
 
-	public SerializableNestedClassAttribute(SqlProviderImpl provider, Class<SqlSerializable> type, String columnName)
+	public SerializableNestedClassAttribute(SqlProviderImpl provider, Class<T> type, String columnName)
 			throws Throwable {
 		this.provider = provider;
 		this.type = type;
@@ -64,13 +63,14 @@ public class SerializableNestedClassAttribute implements SerializableAttribute {
 		// TODO Auto-generated method stub
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable {
 		for (SerializableAttribute field : this.table.getType().getPrimaryKey().getIndexFields())
 			field.serialize(statement, startIndex++,
 					value == null ? null : ((AnnotatedField) field).getField().get(value));
 		if (value != null)
-			this.provider.runDatabaseAction(this.replace.object((SqlSerializable) value));
+			this.provider.runDatabaseAction(this.replace.object((T) value));
 	}
 
 	@Override

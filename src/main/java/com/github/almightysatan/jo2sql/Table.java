@@ -20,7 +20,7 @@
 
 package com.github.almightysatan.jo2sql;
 
-public interface Table<T extends SqlSerializable> {
+public interface Table<T> {
 
 	PreparedReplace<T, Void> prepareReplace();
 

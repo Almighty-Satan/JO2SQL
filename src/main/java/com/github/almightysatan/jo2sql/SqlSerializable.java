@@ -20,7 +20,14 @@
 
 package com.github.almightysatan.jo2sql;
 
-public interface SqlSerializable {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-	String getTableName();
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface SqlSerializable {
+
+	String value();
 }

@@ -22,7 +22,8 @@ package com.github.almightysatan.jo2sql;
 
 import java.util.Objects;
 
-public class TestObject implements SqlSerializable {
+@SqlSerializable("TestObject")
+public class TestObject {
 
 	@Column(value = "string", size = 100, primary = true)
 	public String string;
@@ -56,10 +57,5 @@ public class TestObject implements SqlSerializable {
 			return false;
 		TestObject other = (TestObject) obj;
 		return this.bool == other.bool && this.integer == other.integer && Objects.equals(this.string, other.string);
-	}
-
-	@Override
-	public String getTableName() {
-		return "TestObject";
 	}
 }

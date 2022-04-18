@@ -22,7 +22,8 @@ package com.github.almightysatan.jo2sql;
 
 import java.util.Objects;
 
-public class Superclass implements SqlSerializable {
+@SqlSerializable("Superclass")
+public class Superclass {
 
 	@Column(value = "test", size = 100)
 	private String test;
@@ -54,10 +55,5 @@ public class Superclass implements SqlSerializable {
 	@Override
 	public String toString() {
 		return "Superclass [test=" + this.test + "]";
-	}
-
-	@Override
-	public String getTableName() {
-		return "Superclass";
 	}
 }

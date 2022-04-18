@@ -32,7 +32,7 @@ import java.util.Map;
 import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.SqlSerializable;
 
-public class SerializableClass<T extends SqlSerializable> implements SerializableObject<T> {
+public class SerializableClass<T> implements SerializableObject<T> {
 
 	private final Class<T> type;
 	private final Constructor<T> constructor;
@@ -46,7 +46,12 @@ public class SerializableClass<T extends SqlSerializable> implements Serializabl
 		this.type = type;
 		this.constructor = type.getDeclaredConstructor();
 		this.constructor.setAccessible(true);
-		this.name = this.constructor.newInstance().getTableName();
+
+		SqlSerializable annotation = type.getAnnotation(SqlSerializable.class);
+		if (annotation == null)
+			throw new Error("Missing @SqlSerializable annotation in class " + type.getName());
+
+		this.name = annotation.value();
 
 		List<AnnotatedField> primaryFields = new ArrayList<>();
 		this.loadFields(provider, primaryFields, type);

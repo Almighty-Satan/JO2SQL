@@ -22,6 +22,7 @@ package com.github.almightysatan.jo2sql;
 
 import java.util.Objects;
 
+@SqlSerializable("Subclass")
 public class Subclass extends Superclass {
 
 	@Column(value = "id", autoIncrement = true, primary = true)
@@ -60,10 +61,5 @@ public class Subclass extends Superclass {
 	@Override
 	public String toString() {
 		return "Subclass [id=" + this.id + ", abc=" + this.abc + "]";
-	}
-
-	@Override
-	public String getTableName() {
-		return "Subclass";
 	}
 }
