@@ -18,15 +18,25 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.mysql;
+package com.github.almightysatan.jo2sql.impl.mariadb;
 
-import com.github.almightysatan.jo2sql.impl.types.StringType;
+import java.util.List;
 
-public class MysqlStringType extends StringType {
+import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.mysql.MysqlProviderImpl;
+import com.github.almightysatan.jo2sql.logger.Logger;
+
+public class MariadbProviderImpl extends MysqlProviderImpl {
+
+	static final DataType STRING_TYPE = new MariadbStringType();
+
+	public MariadbProviderImpl(Logger logger, List<DataType> types, String url, String user, String password,
+			String schema) {
+		super(logger, types, url, user, password, schema);
+	}
 
 	@Override
-	public String getSqlType(int size) {
-		this.assertValidSize(size);
-		return "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_0900_as_cs'";
+	protected DataType getStringType() {
+		return STRING_TYPE;
 	}
 }

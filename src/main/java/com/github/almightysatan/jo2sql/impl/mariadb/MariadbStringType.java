@@ -18,15 +18,15 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl.mysql;
+package com.github.almightysatan.jo2sql.impl.mariadb;
 
-import com.github.almightysatan.jo2sql.impl.types.StringType;
+import com.github.almightysatan.jo2sql.impl.mysql.MysqlStringType;
 
-public class MysqlStringType extends StringType {
+public class MariadbStringType extends MysqlStringType {
 
 	@Override
 	public String getSqlType(int size) {
 		this.assertValidSize(size);
-		return "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_0900_as_cs'";
+		return "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_general_cs'";
 	}
 }
