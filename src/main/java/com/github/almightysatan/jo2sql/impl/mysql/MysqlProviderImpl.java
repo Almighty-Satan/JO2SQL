@@ -53,8 +53,7 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 
 	@Override
 	protected Connection createConnection() throws SQLException {
-		return DriverManager.getConnection("jdbc:mysql://" + this.url + "?allowMultiQueries=true", this.user,
-				this.password);
+		return DriverManager.getConnection("jdbc:mysql://" + this.url, this.user, this.password);
 	}
 
 	@Override
