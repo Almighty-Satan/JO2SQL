@@ -58,4 +58,9 @@ public class TestObject {
 		TestObject other = (TestObject) obj;
 		return this.bool == other.bool && this.integer == other.integer && Objects.equals(this.string, other.string);
 	}
+
+	@Override
+	public String toString() {
+		return "TestObject [string=" + this.string + ", bool=" + this.bool + ", integer=" + this.integer + "]";
+	}
 }
