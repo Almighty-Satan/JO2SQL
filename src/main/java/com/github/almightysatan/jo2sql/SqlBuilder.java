@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.github.almightysatan.jo2sql.impl.mariadb.MariadbProviderImpl;
 import com.github.almightysatan.jo2sql.impl.mysql.MysqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.sqlite.SqliteProviderImpl;
 import com.github.almightysatan.jo2sql.logger.CoutLogger;
@@ -92,9 +91,11 @@ public class SqlBuilder {
 	 * @param password The password of the user
 	 * @param schema   The name of the schema
 	 * @return An {@link SqlProvider}
+	 * @deprecated Use {@link #mysql(String, String, String, String)} instead
 	 */
+	@Deprecated
 	public SqlProvider mariadb(String url, String user, String password, String schema) {
-		return new MariadbProviderImpl(this.logger, new ArrayList<>(this.dataTypes), url, user, password, schema);
+		return new MysqlProviderImpl(this.logger, new ArrayList<>(this.dataTypes), url, user, password, schema);
 	}
 
 	/**

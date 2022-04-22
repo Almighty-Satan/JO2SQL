@@ -27,6 +27,6 @@ public class MysqlStringType extends StringType {
 	@Override
 	public String getSqlType(int size) {
 		this.assertValidSize(size);
-		return "VARCHAR(" + size + ") CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_0900_as_cs'";
+		return "VARCHAR(" + size + ") CHARACTER SET 'binary' COLLATE 'binary'";
 	}
 }

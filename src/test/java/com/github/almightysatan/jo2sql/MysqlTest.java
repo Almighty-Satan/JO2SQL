@@ -32,6 +32,6 @@ public class MysqlTest {
 		for (Method method : ApiTest.class.getDeclaredMethods())
 			if (method.getAnnotation(ParameterizedTest.class) != null)
 				method.invoke(new ApiTest(), new SqlBuilder().mysql(System.getenv("mysqlUrl"),
-						System.getenv("mysqlUser"), System.getenv("mysqlPassword"), "jo2sqlTest"));
+						System.getenv("mysqlUser"), System.getenv("mysqlPassword"), System.getenv("mysqlSchema")));
 	}
 }
