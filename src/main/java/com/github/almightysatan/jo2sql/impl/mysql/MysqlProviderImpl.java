@@ -49,6 +49,12 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 		this.user = user;
 		this.password = password;
 		this.schema = schema;
+
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+		} catch (ClassNotFoundException e) {
+			throw new Error("Missing driver", e);
+		}
 	}
 
 	@Override
