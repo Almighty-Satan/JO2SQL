@@ -31,7 +31,7 @@ public class StringMapTest {
 	long id;
 
 	@MapColumn(keyType = String.class, keySize = 100, valueType = String.class, valueSize = 100)
-	@Column(value = "map", type = HashMap.class)
+	@Column(value = "map", type = HashMap.class, notNull = false)
 	Map<String, String> map;
 
 	public StringMapTest() {

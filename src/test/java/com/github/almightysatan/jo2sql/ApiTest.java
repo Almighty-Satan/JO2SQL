@@ -142,6 +142,64 @@ public class ApiTest {
 		sql.terminate();
 	}
 
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNullString(SqlProvider sql) {
+		Subclass object = new Subclass(null, null);
+		object.id = sql.prepareAiReplace(Subclass.class).object(object).completeUnsafe();
+
+		Subclass deserialized = sql.prepareSelect(Subclass.class, Selector.eq("id")).values(object.id).completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNullMap(SqlProvider sql) {
+		StringMapTest object = new StringMapTest(null);
+		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+
+		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+				.completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNullMapEntry(SqlProvider sql) {
+		Map<String, String> map = new HashMap<>();
+		map.put("abc", "Hello");
+		map.put("def", null);
+		StringMapTest object = new StringMapTest(map);
+		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+
+		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+				.completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testEmptyMap(SqlProvider sql) {
+		StringMapTest object = new StringMapTest(new HashMap<>());
+		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+
+		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+				.completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
 	private static Stream<Arguments> getSqlProviders() {
 		if (System.getenv("mysqlUrl") == null)
 			return Stream.of(Arguments.of(new SqlBuilder().sqlite()));

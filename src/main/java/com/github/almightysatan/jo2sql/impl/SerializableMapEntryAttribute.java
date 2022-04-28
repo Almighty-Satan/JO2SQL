@@ -70,12 +70,17 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 			this.parent = this.provider.getOrCreateTable((Class) this.parentObject.getType());
 
 		// TODO Delete old (now unused) data
-		long mapId = 0;
-		for (Entry<?, ?> entry : ((T) value).entrySet()) {
-			long lastInsertId = this.provider
-					.runDatabaseAction(this.replace.object(new MapEntry(mapId, entry.getKey(), entry.getValue())));
-			if (mapId == 0)
-				mapId = lastInsertId;
+		long mapId;
+		if (value == null)
+			mapId = -1;
+		else {
+			mapId = 0;
+			for (Entry<?, ?> entry : ((T) value).entrySet()) {
+				long lastInsertId = this.provider
+						.runDatabaseAction(this.replace.object(new MapEntry(mapId, entry.getKey(), entry.getValue())));
+				if (mapId == 0)
+					mapId = lastInsertId;
+			}
 		}
 
 		SqlProviderImpl.LONG_TYPE.serialize(statement, startIndex, mapId);
@@ -84,12 +89,14 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 	@Override
 	public Object deserialize(String prefix, ResultSet result) throws Throwable {
 		long mapId = (long) SqlProviderImpl.LONG_TYPE.deserialize(prefix + this.columnName, result);
-		@SuppressWarnings("unchecked")
-		Map<Object, Object> instance = (Map<Object, Object>) this.type.newInstance();
-		for (MapEntry entry : this.provider.runDatabaseAction(this.primarySelect.values(mapId)))
-			instance.put(entry.getKey(), entry.getValue());
-
-		return instance;
+		if (mapId != -1) {
+			@SuppressWarnings("unchecked")
+			Map<Object, Object> instance = (Map<Object, Object>) this.type.newInstance();
+			for (MapEntry entry : this.provider.runDatabaseAction(this.primarySelect.values(mapId)))
+				instance.put(entry.getKey(), entry.getValue());
+			return instance;
+		} else
+			return null;
 	}
 
 	@Override

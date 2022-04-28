@@ -25,7 +25,7 @@ import java.util.Objects;
 @SqlSerializable("Superclass")
 public class Superclass {
 
-	@Column(value = "test", size = 100)
+	@Column(value = "test", size = 100, notNull = false)
 	private String test;
 
 	public Superclass() {

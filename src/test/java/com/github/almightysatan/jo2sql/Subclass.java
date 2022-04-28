@@ -27,7 +27,7 @@ public class Subclass extends Superclass {
 
 	@Column(value = "id", autoIncrement = true, primary = true)
 	long id;
-	@Column(value = "abc", size = 100)
+	@Column(value = "abc", size = 100, notNull = false)
 	private String abc;
 
 	public Subclass() {
