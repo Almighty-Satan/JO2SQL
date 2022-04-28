@@ -43,6 +43,8 @@ public class AnnotatedField implements SerializableAttribute {
 		this.columnAnnotation = annotation;
 		this.attribute = attribute;
 
+		StringUtil.assertAlphanumeric(annotation.value());
+
 		if (annotation.type() == void.class)
 			this.type = field.getType();
 		else {

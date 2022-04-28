@@ -50,6 +50,7 @@ public class SerializableClass<T> implements SerializableObject<T> {
 		SqlSerializable annotation = type.getAnnotation(SqlSerializable.class);
 		if (annotation == null)
 			throw new Error("Missing @SqlSerializable annotation in class " + type.getName());
+		StringUtil.assertAlphanumeric(annotation.value());
 
 		this.name = annotation.value();
 

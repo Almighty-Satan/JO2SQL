@@ -29,5 +29,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SqlSerializable {
 
+	/**
+	 * A unique, non-null name for the table of this class. Should only contain
+	 * alphanumeric characters
+	 * 
+	 * @return The name of the table of this class
+	 */
 	String value();
 }

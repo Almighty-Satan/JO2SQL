@@ -142,7 +142,8 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	public SerializableAttribute createSerializableAttribute(Field field, Column annotation,
 			SerializableObject<?> parent) throws Throwable {
 		Class<?> clazz = annotation.type() == void.class ? field.getType() : annotation.type();
-		String columnName = annotation.value();
+		final String columnName = annotation.value();
+		StringUtil.assertAlphanumeric(columnName);
 		int size = annotation.size();
 
 		if (annotation.autoIncrement()) {
@@ -161,8 +162,8 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		if (mapAnnotation != null && Map.class.isAssignableFrom(field.getType()))
 			return new AnnotatedField(this, field, annotation,
 					new SerializableMapEntryAttribute(this, annotation.type(), mapAnnotation.keyType(),
-							mapAnnotation.keySize(), mapAnnotation.valueType(), mapAnnotation.valueSize(),
-							annotation.value(), parent));
+							mapAnnotation.keySize(), mapAnnotation.valueType(), mapAnnotation.valueSize(), columnName,
+							parent));
 
 		return this.createSerializableAttribute(clazz, parent.getName(), columnName, size);
 	}

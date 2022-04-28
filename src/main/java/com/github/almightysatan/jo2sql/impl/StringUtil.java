@@ -36,4 +36,9 @@ public class StringUtil {
 				return false;
 		return true;
 	}
+
+	public static void assertAlphanumeric(String input) {
+		if (!isAlphanumeric(input))
+			throw new IllegalArgumentException(String.format("String '%s' is not alphanumeric", input));
+	}
 }
