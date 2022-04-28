@@ -1,6 +1,6 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
+	id 'java-library'
+	id 'maven-publish'
 }
 
 compileJava.options.encoding = 'UTF-8'
@@ -11,7 +11,7 @@ group 'com.github.almighty-satan'
 version = '1.2.2'
 
 repositories {
-    mavenCentral()
+	mavenCentral()
 }
 
 dependencies {
@@ -20,36 +20,36 @@ dependencies {
 	implementation 'mysql:mysql-connector-java:8.0.28'
 	implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 }
 
 java {
-    withJavadocJar()
-    withSourcesJar()
+	withJavadocJar()
+	withSourcesJar()
 }
 
 publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
 
-            pom {
-                name = 'jo2sql'
-            }
-        }
-    }
+			pom {
+				name = 'jo2sql'
+			}
+		}
+	}
 
-    repositories {
-        maven {
-            url 'https://repo.varoplugin.de/repository/maven-releases/'
-            credentials {
-                username project.hasProperty('repouser') ? project.property('repouser').toString() : null
-                password project.hasProperty('repopassword') ? project.property('repopassword').toString() : null
-            }
-        }
-    }
+	repositories {
+		maven {
+			url 'https://repo.varoplugin.de/repository/maven-releases/'
+			credentials {
+				username project.hasProperty('repouser') ? project.property('repouser').toString() : null
+				password project.hasProperty('repopassword') ? project.property('repopassword').toString() : null
+			}
+		}
+	}
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+	useJUnitPlatform()
 }
