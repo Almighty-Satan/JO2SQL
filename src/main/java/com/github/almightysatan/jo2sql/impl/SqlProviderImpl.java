@@ -174,12 +174,15 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	@Override
-	public <T> DatabaseAction<Void> createIfNecessary(Class<T> type) {
+	public <T> DatabaseAction<Void> createIfNotExists(Class<T> type) {
 		TableImpl<T> table = this.getOrCreateTable(type);
-		return this.createDatabaseAction(() -> {
-			table.createIfNecessary();
-			return null;
-		});
+		return this.createDatabaseAction(table::createIfNotExists);
+	}
+
+	@Override
+	public <T> DatabaseAction<Void> dropIfExists(Class<T> type) {
+		TableImpl<T> table = this.getOrCreateTable(type);
+		return this.createDatabaseAction(table::dropIfExists);
 	}
 
 	@Override
@@ -224,6 +227,16 @@ public abstract class SqlProviderImpl implements SqlProvider {
 			private TableImpl<T> table = SqlProviderImpl.this.getOrCreateTable(type);
 
 			@Override
+			public DatabaseAction<Void> createIfNotExists() {
+				return SqlProviderImpl.this.createDatabaseAction(this.table::createIfNotExists);
+			}
+
+			@Override
+			public DatabaseAction<Void> dropIfExists() {
+				return SqlProviderImpl.this.createDatabaseAction(this.table::dropIfExists);
+			}
+
+			@Override
 			public PreparedReplace<T, Void> prepareReplace() {
 				return this.table.prepareReplace();
 			}
@@ -262,6 +275,13 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	protected <T> DatabaseAction<T> createDatabaseAction(ThrowableSupplier<T> action) {
 		return new DatabaseActionImpl<>(action);
+	}
+
+	protected DatabaseAction<Void> createDatabaseAction(ThrowableRunnable action) {
+		return this.createDatabaseAction(() -> {
+			action.run();
+			return null;
+		});
 	}
 
 	public <T> T runDatabaseAction(DatabaseAction<T> action) throws Throwable {

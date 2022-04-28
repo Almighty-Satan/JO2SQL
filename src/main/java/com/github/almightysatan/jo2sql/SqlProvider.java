@@ -24,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 
 public interface SqlProvider {
 
-	<T> DatabaseAction<Void> createIfNecessary(Class<T> type);
+	<T> DatabaseAction<Void> createIfNotExists(Class<T> type);
+
+	<T> DatabaseAction<Void> dropIfExists(Class<T> type);
 
 	<T> PreparedReplace<T, Void> prepareReplace(Class<T> type);
 

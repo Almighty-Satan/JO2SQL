@@ -18,25 +18,10 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql;
+package com.github.almightysatan.jo2sql.impl;
 
-public interface Table<T> {
+@FunctionalInterface
+public interface ThrowableRunnable {
 
-	DatabaseAction<Void> createIfNotExists();
-
-	DatabaseAction<Void> dropIfExists();
-
-	PreparedReplace<T, Void> prepareReplace();
-
-	PreparedReplace<T, Long> prepareAiReplace();
-
-	PreparedSelect<T> preparePrimarySelect();
-
-	PreparedSelect<T> prepareSelect(Selector selector);
-
-	PreparedSelect<T[]> prepareMultiSelect(Selector selector);
-
-	PreparedObjectDelete<T> prepareObjectDelete();
-
-	PreparedDelete prepareDelete(Selector selector);
+	void run() throws Throwable;
 }

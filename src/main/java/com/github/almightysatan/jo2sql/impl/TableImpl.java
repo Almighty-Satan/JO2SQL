@@ -38,7 +38,7 @@ public abstract class TableImpl<T> {
 	protected final SqlProviderImpl provider;
 	protected final SerializableObject<T> type;
 	protected final String fullName;
-	private boolean created;
+	private boolean exists;
 
 	protected TableImpl(SqlProviderImpl provider, SerializableObject<T> type) {
 		this.provider = provider;
@@ -48,11 +48,16 @@ public abstract class TableImpl<T> {
 
 	protected abstract String getFullName(String name);
 
-	void createIfNecessary() throws Throwable {
-		if (!this.created) {
+	void createIfNotExists() throws Throwable {
+		if (!this.exists) {
 			this.check();
-			this.created = true;
+			this.exists = true;
 		}
+	}
+
+	void dropIfExists() throws Throwable {
+		this.provider.executeUpdate("DROP TABLE IF EXISTS " + this.getFullName() + ";");
+		this.exists = false;
 	}
 
 	protected abstract void check() throws Throwable;
@@ -67,13 +72,12 @@ public abstract class TableImpl<T> {
 			@Override
 			public DatabaseAction<Void> object(T value) {
 				return TableImpl.this.provider.createDatabaseAction(() -> {
-					TableImpl.this.createIfNecessary();
+					TableImpl.this.createIfNotExists();
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
 					TableImpl.this.type.serialize(this.statement, value);
 					TableImpl.this.provider.executeUpdate(this.statement);
-					return null;
 				});
 			}
 		};
@@ -89,7 +93,7 @@ public abstract class TableImpl<T> {
 			@Override
 			public DatabaseAction<Long> object(T value) {
 				return TableImpl.this.provider.createDatabaseAction(() -> {
-					TableImpl.this.createIfNecessary();
+					TableImpl.this.createIfNotExists();
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
@@ -177,7 +181,7 @@ public abstract class TableImpl<T> {
 			@Override
 			public DatabaseAction<X> values(Object... values) {
 				return TableImpl.this.provider.createDatabaseAction(() -> {
-					TableImpl.this.createIfNecessary();
+					TableImpl.this.createIfNotExists();
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
@@ -202,7 +206,7 @@ public abstract class TableImpl<T> {
 			@Override
 			public DatabaseAction<Void> object(T object) {
 				return TableImpl.this.provider.createDatabaseAction(() -> {
-					TableImpl.this.createIfNecessary();
+					TableImpl.this.createIfNotExists();
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
@@ -228,7 +232,7 @@ public abstract class TableImpl<T> {
 			@Override
 			public DatabaseAction<Void> values(Object... values) {
 				return TableImpl.this.provider.createDatabaseAction(() -> {
-					TableImpl.this.createIfNecessary();
+					TableImpl.this.createIfNotExists();
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
