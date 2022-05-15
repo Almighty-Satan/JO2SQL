@@ -52,7 +52,7 @@ public final class Selector {
 		return multiKeyOp(EQ, AND, keys);
 	}
 
-	public static Selector eqOR(String... keys) {
+	public static Selector eqOr(String... keys) {
 		return multiKeyOp(EQ, OR, keys);
 	}
 
