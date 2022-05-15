@@ -23,6 +23,7 @@ package com.github.almightysatan.jo2sql;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -197,6 +198,14 @@ public class ApiTest {
 
 		assertEquals(object, deserialized);
 
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testInvalidSelect(SqlProvider sql) {
+		assertThrows(Error.class,
+				() -> sql.prepareSelect(TestObject.class, Selector.eq("\"")).values("abc").completeUnsafe());
 		sql.terminate();
 	}
 
