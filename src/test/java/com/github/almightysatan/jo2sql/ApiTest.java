@@ -115,13 +115,107 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testObjectDelete(SqlProvider sql) {
 		TestObject object = new TestObject("DeleteMeDaddy", true, 666);
-		sql.prepareAiReplace(TestObject.class).object(object).queue();
+		sql.prepareReplace(TestObject.class).object(object).queue();
 		sql.prepareObjectDelete(TestObject.class).object(object).queue();
 
 		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object.string)
 				.completeUnsafe();
 
 		assertNull(deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNestedDeleteEnabled(SqlProvider sql) {
+		ParentObject object = new ParentObject(new ChildObject("DeleteTestFirst", "DeleteTestLast", 1337,
+				new ChildChildObject("DeleteTestTestFirst", "DeleteTestTestFirst", 0__0)));
+
+		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+		sql.prepareObjectDelete(ParentObject.class).overwriteNestedObjects(true).object(object).queue();
+
+		ParentObject deserialized0 = sql.preparePrimarySelect(ParentObject.class).values(object.id).completeUnsafe();
+		ChildObject deserialized1 = sql.preparePrimarySelect(ChildObject.class)
+				.values(object.child.firstName, object.child.lastName).completeUnsafe();
+		ChildChildObject deserialized2 = sql.preparePrimarySelect(ChildChildObject.class)
+				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
+
+		assertNull(deserialized0);
+		assertNull(deserialized1);
+		assertNull(deserialized2);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNestedDeleteDisabled(SqlProvider sql) {
+		ChildObject child = new ChildObject("DeleteTestFirst", "DeleteTestLast", 1337,
+				new ChildChildObject("DeleteTestTestFirst", "DeleteTestTestFirst", 0__0));
+		ParentObject object = new ParentObject(child);
+
+		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+		sql.prepareObjectDelete(ParentObject.class).object(object).queue();
+
+		ParentObject deserialized0 = sql.preparePrimarySelect(ParentObject.class).values(object.id).completeUnsafe();
+		ChildObject deserialized1 = sql.preparePrimarySelect(ChildObject.class)
+				.values(object.child.firstName, object.child.lastName).completeUnsafe();
+		ChildChildObject deserialized2 = sql.preparePrimarySelect(ChildChildObject.class)
+				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
+
+		assertNull(deserialized0);
+		assertEquals(child, deserialized1);
+		assertEquals(child.child, deserialized2);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNestedOverwriteEnabled(SqlProvider sql) {
+		String oldFirstName = "OverwriteTestTestFirst";
+		ParentObject object = new ParentObject(new ChildObject("OverwriteTestFirst", "OverwriteTestLast", 1337,
+				new ChildChildObject(oldFirstName, "OverwriteTestTestFirst", 3)));
+
+		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+
+		object.child.child.firstName = "OverwriteTestTestNewFirst";
+		object.child.child.age++;
+
+		sql.prepareReplace(ParentObject.class).overwriteNestedObjects().object(object).queue();
+
+		ChildChildObject deserializedOld = sql.preparePrimarySelect(ChildChildObject.class)
+				.values(oldFirstName, object.child.child.lastName).completeUnsafe();
+		ChildChildObject deserializedNew = sql.preparePrimarySelect(ChildChildObject.class)
+				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
+
+		assertNull(deserializedOld);
+		assertEquals(object.child.child, deserializedNew);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testNestedOverwriteDisabled(SqlProvider sql) {
+		ChildChildObject oldChild = new ChildChildObject("OverwriteTestTestFirst", "OverwriteTestTestFirst", 5);
+		ParentObject object = new ParentObject(
+				new ChildObject("OverwriteTestFirst", "OverwriteTestLast", 1337, oldChild));
+
+		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+
+		object.child.child = new ChildChildObject("OverwriteTestTestNewFirst", "OverwriteTestTestNewLast", 6);
+
+		sql.prepareReplace(ParentObject.class).object(object).queue();
+
+		ChildChildObject deserializedOld = sql.preparePrimarySelect(ChildChildObject.class)
+				.values(oldChild.firstName, oldChild.lastName).completeUnsafe();
+		ChildChildObject deserializedNew = sql.preparePrimarySelect(ChildChildObject.class)
+				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
+
+		assertEquals(oldChild, deserializedOld);
+		assertEquals(object.child.child, deserializedNew);
 
 		sql.terminate();
 	}

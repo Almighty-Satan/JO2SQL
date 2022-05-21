@@ -67,7 +67,14 @@ public abstract class TableImpl<T> {
 
 		return new PreparedReplace<T, Void>() {
 
+			private boolean overwriteNested;
 			private CachedStatement statement;
+
+			@Override
+			public PreparedReplace<T, Void> overwriteNestedObjects(boolean overwrite) {
+				this.overwriteNested = overwrite;
+				return this;
+			}
 
 			@Override
 			public DatabaseAction<Void> object(T value) {
@@ -88,7 +95,14 @@ public abstract class TableImpl<T> {
 
 		return new PreparedReplace<T, Long>() {
 
+			private boolean overwriteNested;
 			private CachedStatement statement;
+
+			@Override
+			public PreparedReplace<T, Long> overwriteNestedObjects(boolean overwrite) {
+				this.overwriteNested = overwrite;
+				return this;
+			}
 
 			@Override
 			public DatabaseAction<Long> object(T value) {
@@ -176,6 +190,7 @@ public abstract class TableImpl<T> {
 				.append(selector.getCommand()).append(";").toString();
 
 		return new PreparedSelect<X>() {
+
 			private CachedStatement statement;
 
 			@Override
@@ -201,7 +216,15 @@ public abstract class TableImpl<T> {
 				.append(this.type.getPrimaryKey().getSelector().getCommand()).append(";").toString();
 
 		return new PreparedObjectDelete<T>() {
+
+			private boolean overwriteNested;
 			private CachedStatement statement;
+
+			@Override
+			public PreparedObjectDelete<T> overwriteNestedObjects(boolean overwrite) {
+				this.overwriteNested = overwrite;
+				return this;
+			}
 
 			@Override
 			public DatabaseAction<Void> object(T object) {
@@ -227,7 +250,15 @@ public abstract class TableImpl<T> {
 				.append(selector.getCommand()).append(";").toString();
 
 		return new PreparedDelete() {
+
+			private boolean overwriteNested;
 			private CachedStatement statement;
+
+			@Override
+			public PreparedDelete overwriteNestedObjects(boolean overwrite) {
+				this.overwriteNested = overwrite;
+				return this;
+			}
 
 			@Override
 			public DatabaseAction<Void> values(Object... values) {

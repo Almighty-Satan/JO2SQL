@@ -20,7 +20,7 @@
 
 package com.github.almightysatan.jo2sql;
 
-public interface PreparedDelete {
+public interface PreparedDelete extends PreparedPushAction<PreparedDelete> {
 
 	DatabaseAction<Void> values(Object... values);
 }

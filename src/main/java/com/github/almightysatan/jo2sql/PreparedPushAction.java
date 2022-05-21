@@ -20,7 +20,24 @@
 
 package com.github.almightysatan.jo2sql;
 
-public interface PreparedObjectDelete<T> extends PreparedPushAction<PreparedObjectDelete<T>> {
+public interface PreparedPushAction<T extends PreparedPushAction<?>> {
 
-	DatabaseAction<Void> object(T object);
+	/**
+	 * If enabled nested objects will be deleted or overwritten
+	 * 
+	 * @param overwrite If nested objects will be deleted or overwritten. This could
+	 *                  possibly delete nested objects that are still referenced
+	 *                  somewhere else. (Default: {@code false})
+	 * @return This {@link PreparedPushAction} instance
+	 */
+	T overwriteNestedObjects(boolean overwrite);
+
+	/**
+	 * Equivalent to {@code overwriteNestedObjects(true)}
+	 * 
+	 * @return This {@link PreparedPushAction} instance
+	 */
+	default T overwriteNestedObjects() {
+		return this.overwriteNestedObjects(true);
+	}
 }

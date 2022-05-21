@@ -20,7 +20,7 @@
 
 package com.github.almightysatan.jo2sql;
 
-public interface PreparedReplace<T, R> {
+public interface PreparedReplace<T, R> extends PreparedPushAction<PreparedReplace<T, R>> {
 
 	DatabaseAction<R> object(T value);
 }
