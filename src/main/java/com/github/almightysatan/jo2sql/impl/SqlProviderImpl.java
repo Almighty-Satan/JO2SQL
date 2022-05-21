@@ -202,12 +202,12 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	@Override
 	public <T> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector) {
-		return this.getOrCreateTable(type).prepareSingleSelect(selector);
+		return this.getOrCreateTable(type).prepareSingleSelect((SelectorImpl) selector);
 	}
 
 	@Override
 	public <T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector) {
-		return this.getOrCreateTable(type).prepareMultiSelect(selector);
+		return this.getOrCreateTable(type).prepareMultiSelect((SelectorImpl) selector);
 	}
 
 	@Override
@@ -217,7 +217,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	@Override
 	public <T> PreparedDelete prepareDelete(Class<T> type, Selector selector) {
-		return this.getOrCreateTable(type).prepareDelete(selector);
+		return this.getOrCreateTable(type).prepareDelete((SelectorImpl) selector);
 	}
 
 	@Override
@@ -253,12 +253,12 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 			@Override
 			public PreparedSelect<T> prepareSelect(Selector selector) {
-				return this.table.prepareSingleSelect(selector);
+				return this.table.prepareSingleSelect((SelectorImpl) selector);
 			}
 
 			@Override
 			public PreparedSelect<T[]> prepareMultiSelect(Selector selector) {
-				return this.table.prepareMultiSelect(selector);
+				return this.table.prepareMultiSelect((SelectorImpl) selector);
 			}
 
 			@Override
@@ -268,7 +268,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 			@Override
 			public PreparedDelete prepareDelete(Selector selector) {
-				return this.table.prepareDelete(selector);
+				return this.table.prepareDelete((SelectorImpl) selector);
 			}
 		};
 	}

@@ -20,111 +20,51 @@
 
 package com.github.almightysatan.jo2sql;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.github.almightysatan.jo2sql.impl.SelectorImpl;
 
-public final class Selector {
+public interface Selector {
 
-	private static final String EQ = "=";
-	private static final String NEQ = "!=";
-	private static final String CMPL = "<";
-	private static final String CMPG = ">";
-	private static final String CMPLE = "<=";
-	private static final String CMPGE = ">=";
-	private static final String LIKE = "LIKE";
-	private static final String AND = " AND ";
-	private static final String OR = " OR ";
-
-	private String command;
-	private String[] keys;
-
-	private Selector(String command, String... keys) {
-		this.command = command;
-		this.keys = keys;
+	static Selector eq(String key) {
+		return SelectorImpl.keyOp(SelectorImpl.EQ, key);
 	}
 
-	public static Selector eq(String key) {
-		return keyOp(EQ, key);
+	static Selector eqAnd(String... keys) {
+		return SelectorImpl.multiKeyOp(SelectorImpl.EQ, SelectorImpl.AND, keys);
 	}
 
-	public static Selector eqAnd(String... keys) {
-		return multiKeyOp(EQ, AND, keys);
+	static Selector eqOr(String... keys) {
+		return SelectorImpl.multiKeyOp(SelectorImpl.EQ, SelectorImpl.OR, keys);
 	}
 
-	public static Selector eqOr(String... keys) {
-		return multiKeyOp(EQ, OR, keys);
+	static Selector neq(String key) {
+		return SelectorImpl.keyOp(SelectorImpl.NEQ, key);
 	}
 
-	public static Selector neq(String key) {
-		return keyOp(NEQ, key);
+	static Selector cmpl(String key) {
+		return SelectorImpl.keyOp(SelectorImpl.CMPL, key);
 	}
 
-	public static Selector cmpl(String key) {
-		return keyOp(CMPL, key);
+	static Selector cmpg(String key) {
+		return SelectorImpl.keyOp(SelectorImpl.CMPG, key);
 	}
 
-	public static Selector cmpg(String key) {
-		return keyOp(CMPG, key);
+	static Selector cmple(String key) {
+		return SelectorImpl.keyOp(SelectorImpl.CMPLE, key);
 	}
 
-	public static Selector cmple(String key) {
-		return keyOp(CMPLE, key);
+	static Selector cmpge(String key) {
+		return SelectorImpl.keyOp(SelectorImpl.CMPGE, key);
 	}
 
-	public static Selector cmpge(String key) {
-		return keyOp(CMPGE, key);
+	static Selector like(String key) {
+		return SelectorImpl.keyOp(SelectorImpl.LIKE, key);
 	}
 
-	public static Selector like(String key) {
-		return keyOp(LIKE, key);
+	static Selector and(Selector... selectors) {
+		return SelectorImpl.selectorOp(SelectorImpl.AND, (SelectorImpl[]) selectors);
 	}
 
-	public static Selector and(Selector... selectors) {
-		return selectorOp(AND, selectors);
-	}
-
-	public static Selector or(Selector... selectors) {
-		return selectorOp(OR, selectors);
-	}
-
-	private static Selector keyOp(String keyOperation, String key) {
-		return new Selector("`" + key + "` " + keyOperation + " ?", key);
-	}
-
-	private static Selector multiKeyOp(String keyOperation, String logicOperator, String... keys) {
-		if (keys.length == 0)
-			throw new IllegalArgumentException();
-		else {
-			StringBuilder stringBuilder = new StringBuilder().append("`").append(keys[0]).append("`")
-					.append(keyOperation).append("?");
-			for (int i = 1; i < keys.length; i++)
-				stringBuilder.append(logicOperator).append("`").append(keys[i]).append("`").append(keyOperation)
-						.append("?");
-			return new Selector(stringBuilder.toString(), keys);
-		}
-	}
-
-	private static Selector selectorOp(String logicOperator, Selector... selectors) {
-		if (selectors.length == 0)
-			throw new IllegalArgumentException();
-		else {
-			List<String> keys = new ArrayList<>();
-			StringBuilder stringBuilder = new StringBuilder().append("(").append(selectors[0].command).append(")");
-			keys.addAll(Arrays.asList(selectors[0].keys));
-			for (int i = 1; i < selectors.length; i++) {
-				stringBuilder.append(logicOperator).append("(").append(selectors[i].command).append(")");
-				keys.addAll(Arrays.asList(selectors[i].keys));
-			}
-			return new Selector(stringBuilder.toString(), keys.toArray(new String[keys.size()]));
-		}
-	}
-
-	public String getCommand() {
-		return this.command;
-	}
-
-	public String[] getKeys() {
-		return this.keys;
+	static Selector or(Selector... selectors) {
+		return SelectorImpl.selectorOp(SelectorImpl.OR, (SelectorImpl[]) selectors);
 	}
 }

@@ -31,7 +31,6 @@ import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
-import com.github.almightysatan.jo2sql.Selector;
 
 public abstract class TableImpl<T> {
 
@@ -157,7 +156,7 @@ public abstract class TableImpl<T> {
 		return this.prepareSelect(resultInterpreter, this.type.getPrimaryKey().getSelector());
 	}
 
-	PreparedSelect<T> prepareSingleSelect(Selector selector) {
+	PreparedSelect<T> prepareSingleSelect(SelectorImpl selector) {
 		return this.prepareSelect(result -> {
 			try {
 				if (result.next())
@@ -171,7 +170,7 @@ public abstract class TableImpl<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	PreparedSelect<T[]> prepareMultiSelect(Selector selector) {
+	PreparedSelect<T[]> prepareMultiSelect(SelectorImpl selector) {
 		return this.prepareSelect(result -> {
 			try {
 				List<T> list = new ArrayList<>();
@@ -184,7 +183,7 @@ public abstract class TableImpl<T> {
 		}, selector);
 	}
 
-	private <X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, Selector selector) {
+	private <X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, SelectorImpl selector) {
 		SerializableAttribute[] fields = this.type.getAttributes(selector.getKeys());
 		String sql = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ").append("WHERE ")
 				.append(selector.getCommand()).append(";").toString();
@@ -244,7 +243,7 @@ public abstract class TableImpl<T> {
 		};
 	}
 
-	PreparedDelete prepareDelete(Selector selector) {
+	PreparedDelete prepareDelete(SelectorImpl selector) {
 		SerializableAttribute[] attributes = this.type.getAttributes(selector.getKeys());
 		String sql = new StringBuilder("DELETE FROM ").append(this.fullName).append("WHERE ")
 				.append(selector.getCommand()).append(";").toString();

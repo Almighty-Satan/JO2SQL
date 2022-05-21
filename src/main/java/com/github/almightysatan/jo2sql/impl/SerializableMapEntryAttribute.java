@@ -51,7 +51,7 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 				new SerializableMap(this.provider, parentObject.getName() + INTERNAL_COLUMN_DELIMITER + this.columnName,
 						keyType, keySize, valueType, valueSize));
 		this.replace = this.table.prepareAiReplace();
-		this.primarySelect = this.table.prepareMultiSelect(Selector.eq(SerializableMap.ID_COLUMN_NAME));
+		this.primarySelect = this.table.prepareMultiSelect((SelectorImpl) Selector.eq(SerializableMap.ID_COLUMN_NAME));
 
 		this.columnData = new ColumnData[] {
 				new ColumnData(this.getColumnName(), SqlProviderImpl.LONG_TYPE.getSqlType(-1),

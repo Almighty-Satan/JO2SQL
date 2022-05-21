@@ -27,7 +27,7 @@ import com.github.almightysatan.jo2sql.Selector;
 
 public class PrimaryKey extends AbstractIndex {
 
-	private Selector selector;
+	private SelectorImpl selector;
 
 	public PrimaryKey(SerializableAttribute... indexFields) {
 		super(indexFields);
@@ -39,9 +39,9 @@ public class PrimaryKey extends AbstractIndex {
 				.map(SerializableAttribute::getColumnName).collect(Collectors.joining("`,`"))).append("`)");
 	}
 
-	public Selector getSelector() {
+	public SelectorImpl getSelector() {
 		if (this.selector == null)
-			this.selector = Selector.eqAnd(Arrays.stream(this.getIndexFields())
+			this.selector = (SelectorImpl) Selector.eqAnd(Arrays.stream(this.getIndexFields())
 					.map(SerializableAttribute::getColumnName).toArray(String[]::new));
 		return this.selector;
 	}
