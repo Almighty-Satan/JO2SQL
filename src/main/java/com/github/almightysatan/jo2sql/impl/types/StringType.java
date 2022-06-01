@@ -26,11 +26,16 @@ import java.sql.SQLException;
 
 import com.github.almightysatan.jo2sql.DataType;
 
-public abstract class StringType implements DataType {
+public class StringType implements DataType {
 
 	@Override
 	public Class<?>[] getClasses() {
 		return new Class<?>[] { String.class };
+	}
+
+	@Override
+	public String getSqlType(int size) {
+		throw new UnsupportedOperationException();
 	}
 
 	protected void assertValidSize(int size) {
