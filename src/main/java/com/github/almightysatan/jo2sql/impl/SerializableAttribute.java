@@ -56,6 +56,17 @@ public interface SerializableAttribute {
 	 */
 	Object deserialize(String prefix, ResultSet result) throws Throwable;
 
+	/**
+	 * Deletes any nested object from the database. If this is not a nested object
+	 * this will do nothing. Otherwise it will invoke one or multiple database
+	 * requests.
+	 * 
+	 * @param value The object to be deleted
+	 * @throws Throwable Depending on the implementation this method may throw a
+	 *                   number of different exceptions7
+	 */
+	void deleteNested(Object value) throws Throwable;
+
 	String getColumnName();
 
 	ColumnData[] getColumnData();

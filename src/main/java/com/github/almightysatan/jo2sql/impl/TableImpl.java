@@ -61,17 +61,20 @@ public abstract class TableImpl<T> {
 
 	protected abstract void check() throws Throwable;
 
-	public PreparedReplace<T, Void> prepareReplace() {
+	PreparedReplace<T, Void> prepareReplace() {
 		String sql = this.buildReplaceSql();
 
 		return new PreparedReplace<T, Void>() {
 
-			private boolean overwriteNested;
+			private PreparedObjectDelete<T> preparedDelete;
 			private CachedStatement statement;
 
 			@Override
 			public PreparedReplace<T, Void> overwriteNestedObjects(boolean overwrite) {
-				this.overwriteNested = overwrite;
+				if (overwrite)
+					this.preparedDelete = TableImpl.this.prepareObjectDelete().overwriteNestedObjects();
+				else
+					this.preparedDelete = null;
 				return this;
 			}
 
@@ -82,6 +85,8 @@ public abstract class TableImpl<T> {
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
+					if (this.preparedDelete != null)
+						TableImpl.this.provider.runDatabaseAction(this.preparedDelete.object(value));
 					TableImpl.this.type.serialize(this.statement, value);
 					TableImpl.this.provider.executeUpdate(this.statement);
 				});
@@ -94,12 +99,15 @@ public abstract class TableImpl<T> {
 
 		return new PreparedReplace<T, Long>() {
 
-			private boolean overwriteNested;
+			private PreparedObjectDelete<T> preparedDelete;
 			private CachedStatement statement;
 
 			@Override
 			public PreparedReplace<T, Long> overwriteNestedObjects(boolean overwrite) {
-				this.overwriteNested = overwrite;
+				if (overwrite)
+					this.preparedDelete = TableImpl.this.prepareObjectDelete().overwriteNestedObjects();
+				else
+					this.preparedDelete = null;
 				return this;
 			}
 
@@ -110,6 +118,8 @@ public abstract class TableImpl<T> {
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
+					if (this.preparedDelete != null)
+						TableImpl.this.provider.runDatabaseAction(this.preparedDelete.object(value));
 					TableImpl.this.type.serialize(this.statement, value);
 					TableImpl.this.provider.executeUpdate(this.statement);
 					ResultSet result = TableImpl.this.provider
@@ -210,34 +220,22 @@ public abstract class TableImpl<T> {
 	}
 
 	PreparedObjectDelete<T> prepareObjectDelete() {
-		SerializableAttribute[] attributes = TableImpl.this.type.getPrimaryKey().getIndexFields();
-		String sql = new StringBuilder("DELETE FROM ").append(this.fullName).append(" ").append("WHERE ")
-				.append(this.type.getPrimaryKey().getSelector().getCommand()).append(";").toString();
-
+		SerializableAttribute[] attributes = this.type.getAttributes(this.type.getPrimaryKey().getSelector().getKeys());
+		PreparedDelete preparedDelete = this.prepareDelete(this.type.getPrimaryKey().getSelector());
 		return new PreparedObjectDelete<T>() {
-
-			private boolean overwriteNested;
-			private CachedStatement statement;
-
 			@Override
 			public PreparedObjectDelete<T> overwriteNestedObjects(boolean overwrite) {
-				this.overwriteNested = overwrite;
+				preparedDelete.overwriteNestedObjects(overwrite);
 				return this;
 			}
 
 			@Override
 			public DatabaseAction<Void> object(T object) {
 				return TableImpl.this.provider.createDatabaseAction(() -> {
-					TableImpl.this.createIfNotExists();
-
-					if (this.statement == null)
-						this.statement = TableImpl.this.provider.prepareStatement(sql);
-
+					Object[] values = new Object[attributes.length];
 					for (int i = 0; i < attributes.length; i++)
-						this.statement.setParameter(i, attributes[i],
-								((AnnotatedField) attributes[i]).getFieldValue(object));
-					TableImpl.this.provider.executeUpdate(this.statement);
-					return null;
+						values[i] = ((AnnotatedField) attributes[i]).getFieldValue(object);
+					TableImpl.this.provider.runDatabaseAction(preparedDelete.values(values));
 				});
 			}
 		};
@@ -250,12 +248,12 @@ public abstract class TableImpl<T> {
 
 		return new PreparedDelete() {
 
-			private boolean overwriteNested;
+			private PreparedSelect<T[]> preparedMultiSelect;
 			private CachedStatement statement;
 
 			@Override
 			public PreparedDelete overwriteNestedObjects(boolean overwrite) {
-				this.overwriteNested = overwrite;
+				this.preparedMultiSelect = overwrite ? TableImpl.this.prepareMultiSelect(selector) : null;
 				return this;
 			}
 
@@ -266,6 +264,14 @@ public abstract class TableImpl<T> {
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
+
+					if (this.preparedMultiSelect != null) {
+						T[] objects = TableImpl.this.provider
+								.runDatabaseAction(this.preparedMultiSelect.values(values));
+						for (SerializableAttribute attribute : TableImpl.this.type.getAttributes())
+							for (T object : objects)
+								attribute.deleteNested(((AnnotatedField) attribute).getFieldValue(object));
+					}
 
 					for (int i = 0; i < attributes.length; i++)
 						this.statement.setParameter(i, attributes[i], values[i]);

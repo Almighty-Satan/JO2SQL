@@ -95,6 +95,11 @@ public class AnnotatedField implements SerializableAttribute {
 		return this.attribute.deserialize(prefix, result);
 	}
 
+	@Override
+	public void deleteNested(Object value) throws Throwable {
+		this.attribute.deleteNested(value);
+	}
+
 	/**
 	 * Sets the value of this field to an object that is created from the contents
 	 * of the given {@link ResultSet}. This method may invoke further database

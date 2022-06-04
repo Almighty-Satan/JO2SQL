@@ -23,7 +23,10 @@ package com.github.almightysatan.jo2sql;
 public interface PreparedPushAction<T extends PreparedPushAction<?>> {
 
 	/**
-	 * If enabled nested objects will be deleted or overwritten
+	 * If enabled nested objects will be deleted or overwritten. Warning: This will
+	 * always load the object from the database before deleting. Therefore local
+	 * changes to an object that have not been pushed to the database will be
+	 * ignored!
 	 * 
 	 * @param overwrite If nested objects will be deleted or overwritten. This could
 	 *                  possibly delete nested objects that are still referenced

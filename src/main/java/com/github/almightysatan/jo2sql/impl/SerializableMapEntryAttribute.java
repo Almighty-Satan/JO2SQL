@@ -100,6 +100,11 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 	}
 
 	@Override
+	public void deleteNested(Object value) throws Throwable {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
 	public String getColumnName() {
 		return this.columnName;
 	}

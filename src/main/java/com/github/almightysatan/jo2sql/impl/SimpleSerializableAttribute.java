@@ -54,6 +54,11 @@ public class SimpleSerializableAttribute implements SerializableAttribute {
 	}
 
 	@Override
+	public void deleteNested(Object value) throws Throwable {
+		// Do nothing
+	}
+
+	@Override
 	public String getColumnName() {
 		return this.columnName;
 	}

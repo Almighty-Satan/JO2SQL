@@ -23,6 +23,7 @@ package com.github.almightysatan.jo2sql.impl;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 
@@ -34,6 +35,7 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 	private TableImpl<T> table;
 	private PreparedReplace<T, Void> replace;
 	private PreparedSelect<T> primarySelect;
+	private PreparedObjectDelete<T> delete;
 	private String columnName;
 
 	public SerializableNestedClassAttribute(SqlProviderImpl provider, Class<T> type, String columnName)
@@ -48,6 +50,7 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 		this.table = this.provider.getOrCreateTable(this.type);
 		this.replace = this.table.prepareReplace();
 		this.primarySelect = this.table.preparePrimarySelect();
+		this.delete = this.table.prepareObjectDelete().overwriteNestedObjects();
 
 		ColumnData[] dataArray = new ColumnData[this.table.getType().getPrimaryKey().getColumnData().length];
 		int i = 0;
@@ -81,6 +84,13 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 			values[i++] = field.deserialize(prefix + this.getColumnName() + INTERNAL_COLUMN_DELIMITER, result);
 
 		return this.provider.runDatabaseAction(this.primarySelect.values(values));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void deleteNested(Object value) throws Throwable {
+		if (value != null)
+			this.provider.runDatabaseAction(this.delete.object((T) value));
 	}
 
 	@Override
