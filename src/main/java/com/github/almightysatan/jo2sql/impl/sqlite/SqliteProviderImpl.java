@@ -24,6 +24,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -70,8 +71,10 @@ public class SqliteProviderImpl extends SqlProviderImpl {
 	}
 
 	@Override
-	protected String getLastInsertIdFunc() {
-		return "last_insert_rowid";
+	protected long getLastInsertId(String tableName) throws Throwable {
+		ResultSet result = this.executeQuery("SELECT IFNULL(MAX(`id`), 0) FROM " + tableName + ";");
+		result.next();
+		return result.getLong(1);
 	}
 
 	@Override

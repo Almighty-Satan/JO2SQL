@@ -122,10 +122,7 @@ public abstract class TableImpl<T> {
 						TableImpl.this.provider.runDatabaseAction(this.preparedDelete.object(value));
 					TableImpl.this.type.serialize(this.statement, value);
 					TableImpl.this.provider.executeUpdate(this.statement);
-					ResultSet result = TableImpl.this.provider
-							.executeQuery(TableImpl.this.provider.getSelectLastInsertIdStatement());
-					result.next();
-					return result.getLong(1);
+					return TableImpl.this.provider.getLastInsertId(TableImpl.this.getFullName());
 				});
 			}
 		};

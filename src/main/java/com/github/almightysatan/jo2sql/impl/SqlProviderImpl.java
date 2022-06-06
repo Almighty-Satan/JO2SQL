@@ -67,14 +67,12 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	private final Logger logger;
 	private final Map<Class<?>, TableImpl<?>> tables = new HashMap<>();
 	private Connection connection;
-	private CachedStatement selectLastInsertIdStatement;
 
 	public SqlProviderImpl(Logger logger, List<DataType> types) {
 		this.logger = logger;
 		types.addAll(UNIVERSAL_DATA_TYPES);
 		types.add(this.getStringType());
 		this.types = types;
-		this.selectLastInsertIdStatement = this.prepareStatement("SELECT " + this.getLastInsertIdFunc() + "();");
 	}
 
 	private Connection getValidConnection() throws SQLException {
@@ -98,7 +96,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	protected abstract DataType getAiLongType();
 
-	protected abstract String getLastInsertIdFunc();
+	protected abstract long getLastInsertId(String tableName) throws Throwable;
 
 	@SuppressWarnings("unchecked")
 	public synchronized <T> TableImpl<T> getOrCreateTable(Class<T> type) {
@@ -328,10 +326,6 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	public Logger getLogger() {
 		return this.logger;
-	}
-
-	CachedStatement getSelectLastInsertIdStatement() {
-		return this.selectLastInsertIdStatement;
 	}
 
 	class DatabaseActionImpl<T> implements DatabaseAction<T> {

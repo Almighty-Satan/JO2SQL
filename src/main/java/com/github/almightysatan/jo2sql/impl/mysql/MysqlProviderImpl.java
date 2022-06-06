@@ -23,10 +23,12 @@ package com.github.almightysatan.jo2sql.impl.mysql;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
 import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.CachedStatement;
 import com.github.almightysatan.jo2sql.impl.SerializableObject;
 import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 import com.github.almightysatan.jo2sql.impl.TableImpl;
@@ -41,6 +43,7 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	private final String user;
 	private final String password;
 	private final String schema;
+	private CachedStatement selectLastInsertIdStatement;
 
 	public MysqlProviderImpl(Logger logger, List<DataType> types, String url, String user, String password,
 			String schema) {
@@ -55,6 +58,8 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 		} catch (ClassNotFoundException e) {
 			throw new Error("Missing driver", e);
 		}
+
+		this.selectLastInsertIdStatement = this.prepareStatement("SELECT LAST_INSERT_ID();");
 	}
 
 	@Override
@@ -73,8 +78,10 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	}
 
 	@Override
-	protected String getLastInsertIdFunc() {
-		return "LAST_INSERT_ID";
+	protected long getLastInsertId(String tableName) throws Throwable {
+		ResultSet result = this.executeQuery(this.selectLastInsertIdStatement);
+		result.next();
+		return result.getLong(1);
 	}
 
 	@Override
