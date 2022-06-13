@@ -23,22 +23,21 @@ package com.github.almightysatan.jo2sql.impl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
+import com.github.almightysatan.jo2sql.DataType;
+
 public class CachedStatement {
 
 	private final String sql;
-	private final SerializableAttribute[] fields;
-	private final Object[] parameters;
+	private final DataTypeValuePar[] parameters;
 	private PreparedStatement statement;
 
 	public CachedStatement(String sql, int numValues) {
 		this.sql = sql;
-		this.fields = new SerializableAttribute[numValues];
-		this.parameters = new Object[numValues];
+		this.parameters = new DataTypeValuePar[numValues];
 	}
 
-	public void setParameter(int parameterIndex, SerializableAttribute field, Object parameter) {
-		this.fields[parameterIndex] = field;
-		this.parameters[parameterIndex] = parameter;
+	public void setParameter(int parameterIndex, DataType type, Object value) {
+		this.parameters[parameterIndex] = new DataTypeValuePar(type, value);
 	}
 
 	public PreparedStatement getValidPreparedStatement(SqlProviderImpl provider, Connection connection)
@@ -46,14 +45,23 @@ public class CachedStatement {
 		if (this.statement == null || this.statement.getConnection() != connection)
 			this.statement = connection.prepareStatement(this.sql);
 
-		for (int i = 1, j = 0; j < this.fields.length; j++) {
-			SerializableAttribute field = this.fields[j];
-			if (field != null) {
-				field.serialize(this.statement, i, this.parameters[j]);
-				i += field.getColumnData().length;
-			}
+		for (int i = 0; i < this.parameters.length; i++) {
+			DataTypeValuePar parameter = this.parameters[i];
+			if (parameter != null)
+				parameter.dataType.serialize(this.statement, i + 1, parameter.value);
 		}
 
 		return this.statement;
+	}
+
+	private static class DataTypeValuePar {
+
+		private final DataType dataType;
+		private final Object value;
+
+		public DataTypeValuePar(DataType dataType, Object value) {
+			this.dataType = dataType;
+			this.value = value;
+		}
 	}
 }

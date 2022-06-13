@@ -64,6 +64,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	private final List<DataType> types;
 	private final ExecutorService executor = Executors.newSingleThreadExecutor();
+	private Thread thread;
 	private final Logger logger;
 	private final Map<Class<?>, TableImpl<?>> tables = new HashMap<>();
 	private Connection connection;
@@ -73,6 +74,8 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		types.addAll(UNIVERSAL_DATA_TYPES);
 		types.add(this.getStringType());
 		this.types = types;
+
+		this.executor.submit(() -> this.thread = Thread.currentThread());
 	}
 
 	private Connection getValidConnection() throws SQLException {
@@ -159,7 +162,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		MapColumn mapAnnotation = field.getAnnotation(MapColumn.class);
 		if (mapAnnotation != null && Map.class.isAssignableFrom(field.getType()))
 			return new AnnotatedField(this, field, annotation,
-					new SerializableMapEntryAttribute(this, annotation.type(), mapAnnotation.keyType(),
+					new SerializableMapAttribute(this, annotation.type(), mapAnnotation.keyType(),
 							mapAnnotation.keySize(), mapAnnotation.valueType(), mapAnnotation.valueSize(), columnName,
 							parent));
 
@@ -292,25 +295,34 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	public int executeUpdate(CachedStatement cachedStatement) throws Throwable {
+		this.assertExecutorThread();
 		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this, this.getValidConnection());
 		this.logger.debug("Executing prepared update statement %s", statement.toString());
 		return statement.executeUpdate();
 	}
 
 	public ResultSet executeQuery(CachedStatement cachedStatement) throws Throwable {
+		this.assertExecutorThread();
 		PreparedStatement statement = cachedStatement.getValidPreparedStatement(this, this.getValidConnection());
 		this.logger.debug("Executing prepared query statement %s", statement.toString());
 		return statement.executeQuery();
 	}
 
 	public int executeUpdate(String sql) throws SQLException {
+		this.assertExecutorThread();
 		this.logger.debug("Executing update statement %s", sql);
 		return this.getValidConnection().createStatement().executeUpdate(sql);
 	}
 
 	public ResultSet executeQuery(String sql) throws SQLException {
+		this.assertExecutorThread();
 		this.logger.debug("Executing query statement %s", sql);
 		return this.getValidConnection().createStatement().executeQuery(sql);
+	}
+
+	private void assertExecutorThread() {
+		if (Thread.currentThread() != this.thread)
+			throw new Error();
 	}
 
 	@Override

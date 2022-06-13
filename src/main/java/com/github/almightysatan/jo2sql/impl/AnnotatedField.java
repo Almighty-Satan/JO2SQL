@@ -21,7 +21,6 @@
 package com.github.almightysatan.jo2sql.impl;
 
 import java.lang.reflect.Field;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import com.github.almightysatan.jo2sql.Column;
@@ -86,8 +85,9 @@ public class AnnotatedField implements SerializableAttribute {
 	}
 
 	@Override
-	public void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable {
-		this.attribute.serialize(statement, startIndex, value);
+	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
+			throws Throwable {
+		return this.attribute.serialize(statement, startIndex, value, prevValues);
 	}
 
 	@Override
@@ -145,5 +145,10 @@ public class AnnotatedField implements SerializableAttribute {
 	@Override
 	public ColumnData[] getColumnData() {
 		return this.columnData;
+	}
+
+	@Override
+	public boolean needsPrevValue() {
+		return this.attribute.needsPrevValue();
 	}
 }

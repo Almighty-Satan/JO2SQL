@@ -54,9 +54,10 @@ public class SerializableMap implements SerializableObject<MapEntry> {
 
 	@Override
 	public void serialize(CachedStatement statement, MapEntry instance) throws Throwable {
-		statement.setParameter(0, this.idAttribute, instance.getId());
-		statement.setParameter(1, this.keyAttribute, instance.getKey());
-		statement.setParameter(2, this.valueAttribute, instance.getValue());
+		int size = 0;
+		size += this.idAttribute.serialize(statement, size, instance.getId(), null);
+		size += this.keyAttribute.serialize(statement, size, instance.getKey(), null);
+		size += this.valueAttribute.serialize(statement, size, instance.getValue(), null);
 	}
 
 	@Override

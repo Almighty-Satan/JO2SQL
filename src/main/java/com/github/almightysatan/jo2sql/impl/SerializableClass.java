@@ -113,9 +113,9 @@ public class SerializableClass<T> implements SerializableObject<T> {
 
 	@Override
 	public void serialize(CachedStatement statement, T instance) throws Throwable {
-		int i = 0;
+		int size = 0;
 		for (AnnotatedField field : this.fields)
-			statement.setParameter(i++, field, field.getFieldValue(instance));
+			size += field.serialize(statement, size, field.getFieldValue(instance), null);
 	}
 
 	@Override

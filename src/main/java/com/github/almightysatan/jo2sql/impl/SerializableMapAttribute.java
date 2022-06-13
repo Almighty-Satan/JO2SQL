@@ -20,28 +20,29 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.Selector;
 
-public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements SerializableAttribute {
+public class SerializableMapAttribute<T extends Map<?, ?>> implements SerializableAttribute {
 
 	private final SqlProviderImpl provider;
 	private final Class<T> type;
 	private ColumnData[] columnData;
 	private TableImpl<MapEntry> table;
 	private SerializableObject<?> parentObject;
-	private TableImpl<?> parent;
+	private TableImpl<?> parentTable;
 	private PreparedReplace<MapEntry, Long> replace;
+	private PreparedDelete delete;
 	private PreparedSelect<MapEntry[]> primarySelect;
 	private String columnName;
 
-	public SerializableMapEntryAttribute(SqlProviderImpl provider, Class<T> type, Class<?> keyType, int keySize,
+	public SerializableMapAttribute(SqlProviderImpl provider, Class<T> type, Class<?> keyType, int keySize,
 			Class<?> valueType, int valueSize, String columnName, SerializableObject<?> parentObject) throws Throwable {
 		this.provider = provider;
 		this.type = type;
@@ -51,7 +52,9 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 				new SerializableMap(this.provider, parentObject.getName() + INTERNAL_COLUMN_DELIMITER + this.columnName,
 						keyType, keySize, valueType, valueSize));
 		this.replace = this.table.prepareAiReplace();
-		this.primarySelect = this.table.prepareMultiSelect((SelectorImpl) Selector.eq(SerializableMap.ID_COLUMN_NAME));
+		SelectorImpl idSelector = (SelectorImpl) Selector.eq(SerializableMap.ID_COLUMN_NAME);
+		this.delete = this.table.prepareDelete(idSelector);
+		this.primarySelect = this.table.prepareMultiSelect(idSelector);
 
 		this.columnData = new ColumnData[] {
 				new ColumnData(this.getColumnName(), SqlProviderImpl.LONG_TYPE.getSqlType(-1),
@@ -65,11 +68,15 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable {
-		if (this.parent == null)
-			this.parent = this.provider.getOrCreateTable((Class) this.parentObject.getType());
+	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
+			throws Throwable {
+		if (this.parentTable == null)
+			this.parentTable = this.provider.getOrCreateTable((Class) this.parentObject.getType());
 
-		// TODO Delete old (now unused) data
+		if (prevValues != null)
+			// This doesn't have to be executed immediately
+			this.delete.values(SqlProviderImpl.LONG_TYPE.deserialize(this.columnName, prevValues)).queue();
+
 		long mapId;
 		if (value == null)
 			mapId = -1;
@@ -83,7 +90,8 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 			}
 		}
 
-		SqlProviderImpl.LONG_TYPE.serialize(statement, startIndex, mapId);
+		statement.setParameter(startIndex, SqlProviderImpl.LONG_TYPE, mapId);
+		return 1; // This attribute only needs one column
 	}
 
 	@Override
@@ -112,5 +120,10 @@ public class SerializableMapEntryAttribute<T extends Map<?, ?>> implements Seria
 	@Override
 	public ColumnData[] getColumnData() {
 		return this.columnData;
+	}
+
+	@Override
+	public boolean needsPrevValue() {
+		return true;
 	}
 }

@@ -20,7 +20,6 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import com.github.almightysatan.jo2sql.DataType;
@@ -44,8 +43,10 @@ public class SimpleSerializableAttribute implements SerializableAttribute {
 	}
 
 	@Override
-	public void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable {
-		this.type.serialize(statement, startIndex, value);
+	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
+			throws Throwable {
+		statement.setParameter(startIndex, this.type, value);
+		return 1; // This attribute always needs one column
 	}
 
 	@Override
@@ -69,4 +70,8 @@ public class SimpleSerializableAttribute implements SerializableAttribute {
 				this.type.getPreparedReplaceSql(this.columnName, this.tableName)) };
 	}
 
+	@Override
+	public boolean needsPrevValue() {
+		return false;
+	}
 }

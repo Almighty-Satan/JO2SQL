@@ -155,12 +155,8 @@ public abstract class TableImpl<T> {
 		return replaceBuilder.append(");").toString();
 	}
 
-	public PreparedSelect<T> preparePrimarySelect() {
+	PreparedSelect<T> preparePrimarySelect() {
 		return this.prepareSingleSelect(this.type.getPrimaryKey().getSelector());
-	}
-
-	<X> PreparedSelect<X> preparePrimarySelect(Function<ResultSet, X> resultInterpreter) {
-		return this.prepareSelect(resultInterpreter, this.type.getPrimaryKey().getSelector());
 	}
 
 	PreparedSelect<T> prepareSingleSelect(SelectorImpl selector) {
@@ -190,27 +186,41 @@ public abstract class TableImpl<T> {
 		}, selector);
 	}
 
-	private <X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, SelectorImpl selector) {
-		SerializableAttribute[] fields = this.type.getAttributes(selector.getKeys());
+	<X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, SelectorImpl selector) {
+		PreparedSelect<ResultSet> preparedSelect = this.prepareSelect(selector);
+
+		return new PreparedSelect<X>() {
+
+			@Override
+			public DatabaseAction<X> values(Object... values) {
+				DatabaseAction<ResultSet> action = preparedSelect.values(values);
+				return TableImpl.this.provider.createDatabaseAction(() -> {
+					return resultInterpreter.apply(TableImpl.this.provider.runDatabaseAction(action));
+				});
+			}
+		};
+	}
+
+	PreparedSelect<ResultSet> prepareSelect(SelectorImpl selector) {
+		SerializableAttribute[] attributes = this.type.getAttributes(selector.getKeys());
 		String sql = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ").append("WHERE ")
 				.append(selector.getCommand()).append(";").toString();
 
-		return new PreparedSelect<X>() {
+		return new PreparedSelect<ResultSet>() {
 
 			private CachedStatement statement;
 
 			@Override
-			public DatabaseAction<X> values(Object... values) {
+			public DatabaseAction<ResultSet> values(Object... values) {
 				return TableImpl.this.provider.createDatabaseAction(() -> {
 					TableImpl.this.createIfNotExists();
 
 					if (this.statement == null)
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
 
-					for (int i = 0; i < fields.length; i++)
-						this.statement.setParameter(i, fields[i], values[i]);
-					ResultSet result = TableImpl.this.provider.executeQuery(this.statement);
-					return resultInterpreter.apply(result);
+					for (int i = 0, size = 0; i < attributes.length; i++)
+						size += attributes[i].serialize(this.statement, size, values[i], null);
+					return TableImpl.this.provider.executeQuery(this.statement);
 				});
 			}
 		};
@@ -270,13 +280,17 @@ public abstract class TableImpl<T> {
 								attribute.deleteNested(((AnnotatedField) attribute).getFieldValue(object));
 					}
 
-					for (int i = 0; i < attributes.length; i++)
-						this.statement.setParameter(i, attributes[i], values[i]);
+					for (int i = 0, size = 0; i < attributes.length; i++)
+						size += attributes[i].serialize(this.statement, size, values[i], null);
 					TableImpl.this.provider.executeUpdate(this.statement);
 					return null;
 				});
 			}
 		};
+	}
+
+	public PreparedDelete preparePrimaryDelete() {
+		return this.prepareDelete(this.type.getPrimaryKey().getSelector());
 	}
 
 	public SerializableObject<T> getType() {

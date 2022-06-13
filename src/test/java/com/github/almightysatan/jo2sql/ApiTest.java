@@ -239,6 +239,25 @@ public class ApiTest {
 
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
+	public void testStringMapGC(SqlProvider sql) {
+		Map<String, String> map = new HashMap<>();
+		map.put("ghi", "Hi");
+		map.put("jkl", "Earth");
+		StringMapTest object = new StringMapTest(map);
+		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+
+		sql.prepareReplace(StringMapTest.class).object(object).completeUnsafe();
+
+		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+				.completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
 	public void testMapDelete(SqlProvider sql) {
 		Map<String, String> map = new HashMap<>();
 		map.put("0123", "Hello");

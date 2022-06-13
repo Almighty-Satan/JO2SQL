@@ -30,18 +30,18 @@ public interface SerializableAttribute {
 	void appendIndex(StringBuilder builder, String delimiter);
 
 	/**
-	 * Sets the parameters of a {@link PreparedStatement} to the value of this
+	 * Sets the parameters of a {@link CachedStatement} to the value of this
 	 * attribute. This method may invoke database requests to save nested objects to
 	 * the database.
 	 * 
-	 * @param statement  The {@link PreparedStatement}
+	 * @param statement  The {@link CachedStatement}
 	 * @param startIndex The index where the first parameter should be set
 	 * @param value      The value that should be loaded into the
 	 *                   {@link PreparedStatement}
 	 * @throws Throwable Depending on the implementation this method may throw a
 	 *                   number of different exceptions
 	 */
-	void serialize(PreparedStatement statement, int startIndex, Object value) throws Throwable;
+	int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues) throws Throwable;
 
 	/**
 	 * Creates an object that is created from the contents of the given
@@ -63,12 +63,14 @@ public interface SerializableAttribute {
 	 * 
 	 * @param value The object to be deleted
 	 * @throws Throwable Depending on the implementation this method may throw a
-	 *                   number of different exceptions7
+	 *                   number of different exceptions
 	 */
 	void deleteNested(Object value) throws Throwable;
 
 	String getColumnName();
 
 	ColumnData[] getColumnData();
+
+	boolean needsPrevValue();
 
 }
