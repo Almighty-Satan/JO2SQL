@@ -40,7 +40,7 @@ public class SerializableMap implements SerializableObject<MapEntry> {
 		this.name = name;
 		this.idAttribute = new SimpleSerializableAttribute(provider.getAiLongType(), name, ID_COLUMN_NAME, -1);
 		this.keyAttribute = provider.createSerializableAttribute(key, name, KEY_COLUMN_NAME, keySize);
-		this.valueAttribute = provider.createSerializableAttribute(value, name, VALUE_COLUMN_NAME, valueSize);
+		this.valueAttribute = provider.createSerializableAttribute(value, VALUE_COLUMN_NAME, valueSize, false, this);
 		this.attributes = new SerializableAttribute[] { this.idAttribute, this.keyAttribute, this.valueAttribute };
 		this.primaryKey = new PrimaryKey(this.idAttribute, this.keyAttribute);
 	}

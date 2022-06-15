@@ -239,6 +239,23 @@ public class ApiTest {
 
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
+	public void testNestedClassMap(SqlProvider sql) {
+		Map<String, ChildChildObject> map = new HashMap<>();
+		map.put("abc", new ChildChildObject("John", "Doe", 69));
+		map.put("def", new ChildChildObject("Jane", "Doe", 69));
+		NestedObjectMapTest object = new NestedObjectMapTest(map);
+		object.id = sql.prepareAiReplace(NestedObjectMapTest.class).object(object).completeUnsafe();
+
+		NestedObjectMapTest deserialized = sql.prepareSelect(NestedObjectMapTest.class, Selector.eq("id"))
+				.values(object.id).completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
 	public void testStringMapGC(SqlProvider sql) {
 		Map<String, String> map = new HashMap<>();
 		map.put("ghi", "Hi");
@@ -260,7 +277,7 @@ public class ApiTest {
 
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
-	public void testMapDelete(SqlProvider sql) {
+	public void testMapEntryDelete(SqlProvider sql) {
 		Map<String, String> map = new HashMap<>();
 		map.put("0123", "Hello");
 		map.put("01234", "World");

@@ -136,37 +136,42 @@ public abstract class SqlProviderImpl implements SqlProvider {
 			if (type.isOfType(clazz))
 				return new SimpleSerializableAttribute(type, tableName, columnName, size);
 
-		throw new Error(String.format("Unsupported type of field %s in %s", columnName, size));
+		throw new Error(String.format("Unsupported type of field %s", columnName));
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public SerializableAttribute createSerializableAttribute(Field field, Column annotation,
+	public SerializableAttribute createSerializableAttribute(Class<?> clazz, String columnName, int size, boolean ai,
 			SerializableObject<?> parent) throws Throwable {
-		Class<?> clazz = annotation.type() == void.class ? field.getType() : annotation.type();
-		final String columnName = annotation.value();
 		StringUtil.assertAlphanumeric(columnName);
-		int size = annotation.size();
 
-		if (annotation.autoIncrement()) {
+		if (ai) {
 			DataType aiLongType = this.getAiLongType();
 			if (aiLongType.isOfType(clazz))
 				return new SimpleSerializableAttribute(aiLongType, parent.getName(), columnName, size);
 			else
-				throw new Error(
-						String.format("Invalid auto increment type in class %s", field.getDeclaringClass().getName()));
+				throw new Error(String.format("Invalid auto increment type in class %s", parent.getType().getName()));
 		}
 
 		if (clazz.isAnnotationPresent(SqlSerializable.class))
 			return new SerializableNestedClassAttribute(this, clazz, columnName);
 
+		return this.createSerializableAttribute(clazz, parent.getName(), columnName, size);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public SerializableAttribute createSerializableAttribute(Field field, Column annotation,
+			SerializableObject<?> parent) throws Throwable {
+		Class<?> clazz = annotation.type() == void.class ? field.getType() : annotation.type();
+
 		MapColumn mapAnnotation = field.getAnnotation(MapColumn.class);
-		if (mapAnnotation != null && Map.class.isAssignableFrom(field.getType()))
+		if (mapAnnotation != null && Map.class.isAssignableFrom(clazz))
 			return new AnnotatedField(this, field, annotation,
 					new SerializableMapAttribute(this, annotation.type(), mapAnnotation.keyType(),
-							mapAnnotation.keySize(), mapAnnotation.valueType(), mapAnnotation.valueSize(), columnName,
-							parent));
+							mapAnnotation.keySize(), mapAnnotation.valueType(), mapAnnotation.valueSize(),
+							annotation.value(), parent));
 
-		return this.createSerializableAttribute(clazz, parent.getName(), columnName, size);
+		return this.createSerializableAttribute(clazz, annotation.value(), annotation.size(),
+				annotation.autoIncrement(), parent);
 	}
 
 	public AnnotatedField createAnnotatedField(Field field, Column annotation, SerializableObject<?> parent)
