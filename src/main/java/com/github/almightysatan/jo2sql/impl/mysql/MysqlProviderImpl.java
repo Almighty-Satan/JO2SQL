@@ -68,7 +68,7 @@ public class MysqlProviderImpl extends SqlProviderImpl {
 	}
 
 	@Override
-	protected DataType getStringType() {
+	public DataType getStringType() {
 		return STRING_TYPE;
 	}
 

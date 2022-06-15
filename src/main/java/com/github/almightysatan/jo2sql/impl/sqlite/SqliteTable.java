@@ -21,10 +21,9 @@
 package com.github.almightysatan.jo2sql.impl.sqlite;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
 
-import com.github.almightysatan.jo2sql.impl.ColumnData;
-import com.github.almightysatan.jo2sql.impl.SerializableAttribute;
+import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.CachedStatement;
 import com.github.almightysatan.jo2sql.impl.SerializableObject;
 import com.github.almightysatan.jo2sql.impl.TableImpl;
 
@@ -42,32 +41,24 @@ public class SqliteTable<T> extends TableImpl<T> {
 	}
 
 	@Override
-	protected void check() throws SQLException {
-		if (!this.provider.executeQuery(
-				"SELECT * FROM sqlite_schema WHERE type='table' AND name = '" + this.type.getName() + "' LIMIT 1;")
-				.next()) {
-			// Table does not exist
-			this.provider.getLogger().info("Creating table %s", this.getFullName());
+	protected CachedStatement getTableSelectStatement() {
+		DataType stringType = this.provider.getStringType();
 
-			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
-			boolean first = true;
-			for (SerializableAttribute attribute : this.getType().getAttributes()) {
-				for (ColumnData column : attribute.getColumnData()) {
-					if (first)
-						first = false;
-					else
-						statement.append(",");
-					statement.append("`").append(column.getName()).append("`").append(column.getSqlStatement());
-				}
-				attribute.appendIndex(statement, ",");
-			}
-			this.getType().getPrimaryKey().appendIndex(statement, ",");
-			statement.append(");");
+		CachedStatement statement = this.provider
+				.prepareStatement("SELECT * FROM sqlite_schema WHERE type='table' AND name = ? LIMIT 1;");
+		statement.setParameter(0, stringType, this.type.getName());
+		return statement;
+	}
 
-			this.provider.executeUpdate(statement.toString());
-		} else {
-			// Table exists
-			// TODO implement this
-		}
+	@Override
+	protected CachedStatement getColumnSelectStatement() {
+		CachedStatement statement = this.provider.prepareStatement("PRAGMA table_info(?);");
+		statement.setParameter(0, this.provider.getStringType(), this.type.getName());
+		return statement;
+	}
+
+	@Override
+	protected String getColumnNameLabel() {
+		return "name";
 	}
 }

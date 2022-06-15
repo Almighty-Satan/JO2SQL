@@ -22,8 +22,8 @@ package com.github.almightysatan.jo2sql.impl.mysql;
 
 import java.lang.reflect.InvocationTargetException;
 
-import com.github.almightysatan.jo2sql.impl.ColumnData;
-import com.github.almightysatan.jo2sql.impl.SerializableAttribute;
+import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.CachedStatement;
 import com.github.almightysatan.jo2sql.impl.SerializableObject;
 import com.github.almightysatan.jo2sql.impl.TableImpl;
 
@@ -36,37 +36,35 @@ public class MysqlTable<T> extends TableImpl<T> {
 
 	@Override
 	protected String getFullName(String name) {
-		return "`" + ((MysqlProviderImpl) this.provider).getSchema() + "`.`" + this.getType().getName() + "`";
+		return "`" + ((MysqlProviderImpl) this.provider).getSchema() + "`.`" + name + "`";
 	}
 
 	@Override
-	protected void check() throws Throwable {
+	protected CachedStatement getTableSelectStatement() {
 		String schema = ((MysqlProviderImpl) this.provider).getSchema();
+		DataType stringType = this.provider.getStringType();
 
-		if (!this.provider.executeQuery("SELECT * FROM information_schema.tables WHERE table_schema = '" + schema
-				+ "' AND table_name = '" + this.type.getName() + "' LIMIT 1;").next()) {
-			// Table does not exist
-			this.provider.getLogger().info("Creating table %s", this.getFullName());
+		CachedStatement statement = this.provider.prepareStatement(
+				"SELECT * FROM information_schema.tables WHERE table_schema = ? AND table_name = ? LIMIT 1;");
+		statement.setParameter(0, stringType, schema);
+		statement.setParameter(1, stringType, this.type.getName());
+		return statement;
+	}
 
-			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
-			boolean first = true;
-			for (SerializableAttribute attribute : this.getType().getAttributes()) {
-				for (ColumnData column : attribute.getColumnData()) {
-					if (first)
-						first = false;
-					else
-						statement.append(",");
-					statement.append("`").append(column.getName()).append("`").append(column.getSqlStatement());
-				}
-				attribute.appendIndex(statement, ",");
-			}
-			this.getType().getPrimaryKey().appendIndex(statement, ",");
-			statement.append(");");
+	@Override
+	protected CachedStatement getColumnSelectStatement() {
+		String schema = ((MysqlProviderImpl) this.provider).getSchema();
+		DataType stringType = this.provider.getStringType();
 
-			this.provider.executeUpdate(statement.toString());
-		} else {
-			// Table exists
-			// TODO implement this
-		}
+		CachedStatement statement = this.provider
+				.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=?;");
+		statement.setParameter(0, stringType, schema);
+		statement.setParameter(1, stringType, this.type.getName());
+		return statement;
+	}
+
+	@Override
+	protected String getColumnNameLabel() {
+		return "COLUMN_NAME";
 	}
 }

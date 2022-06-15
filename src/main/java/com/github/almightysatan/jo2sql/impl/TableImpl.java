@@ -23,8 +23,12 @@ package com.github.almightysatan.jo2sql.impl;
 import java.lang.reflect.Array;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.github.almightysatan.jo2sql.DatabaseAction;
 import com.github.almightysatan.jo2sql.PreparedDelete;
@@ -59,7 +63,52 @@ public abstract class TableImpl<T> {
 		this.exists = false;
 	}
 
-	protected abstract void check() throws Throwable;
+	protected void check() throws Throwable {
+		if (!this.provider.executeQuery(this.getTableSelectStatement()).next()) {
+			// Table does not exist
+			this.provider.getLogger().info("Creating table %s", this.getFullName());
+
+			StringBuilder statement = new StringBuilder().append("CREATE TABLE ").append(this.fullName).append(" (");
+			boolean first = true;
+			for (SerializableAttribute attribute : this.getType().getAttributes()) {
+				for (ColumnData column : attribute.getColumnData()) {
+					if (first)
+						first = false;
+					else
+						statement.append(",");
+					statement.append("`").append(column.getName()).append("`").append(column.getSqlStatement());
+				}
+				attribute.appendIndex(statement, ",");
+			}
+			this.getType().getPrimaryKey().appendIndex(statement, ",");
+			statement.append(");");
+
+			this.provider.executeUpdate(statement.toString());
+		} else {
+			// Table exists
+			ResultSet result = this.provider.executeQuery(this.getColumnSelectStatement());
+			Map<String, ColumnData> columns = Arrays.stream(this.type.getAttributes())
+					.flatMap(attribute -> Arrays.stream(attribute.getColumnData()))
+					.collect(Collectors.toMap(ColumnData::getName, (v) -> v, (v1, v2) -> {
+						throw new Error();
+					}, HashMap::new));
+			while (result.next())
+				columns.remove(result.getString(this.getColumnNameLabel()));
+
+			for (ColumnData column : columns.values()) {
+				this.provider.getLogger().info("Adding column %s to table %s", column.getName(), this.getFullName());
+
+				this.provider.executeUpdate("ALTER TABLE " + this.fullName + " ADD COLUMN " + column.getName() + " "
+						+ column.getSqlStatement() + ";");
+			}
+		}
+	}
+
+	protected abstract CachedStatement getTableSelectStatement();
+
+	protected abstract CachedStatement getColumnSelectStatement();
+
+	protected abstract String getColumnNameLabel();
 
 	PreparedReplace<T, Void> prepareReplace() {
 		String sql = this.buildReplaceSql();
@@ -219,7 +268,7 @@ public abstract class TableImpl<T> {
 	PreparedSelect<ResultSet> prepareSelect(SelectorImpl selector, int offset, int limit) {
 		SerializableAttribute[] attributes = this.type.getAttributes(selector.getKeys());
 		String sql = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ").append("WHERE ")
-				.append(selector.getCommand()).append("LIMIT ").append(offset).append(", ").append(limit).append(";")
+				.append(selector.getCommand()).append(" LIMIT ").append(offset).append(", ").append(limit).append(";")
 				.toString();
 
 		return new PreparedSelect<ResultSet>() {

@@ -98,7 +98,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	protected abstract Connection createConnection() throws SQLException;
 
-	protected abstract DataType getStringType();
+	public abstract DataType getStringType();
 
 	protected abstract DataType getAiLongType();
 
