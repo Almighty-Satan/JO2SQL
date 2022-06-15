@@ -201,42 +201,42 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	@Override
-	public <T> PreparedReplace<T, Void> prepareReplace(Class<T> type) {
+	public <T> PreparedReplace<T, Void> replace(Class<T> type) {
 		return this.getOrCreateTable(type).prepareReplace();
 	}
 
 	@Override
-	public <T> PreparedReplace<T, Long> prepareAiReplace(Class<T> type) {
+	public <T> PreparedReplace<T, Long> replaceAi(Class<T> type) {
 		return this.getOrCreateTable(type).prepareAiReplace();
 	}
 
 	@Override
-	public <T> PreparedSelect<T> preparePrimarySelect(Class<T> type) {
+	public <T> PreparedSelect<T> selectPrimary(Class<T> type) {
 		return this.getOrCreateTable(type).preparePrimarySelect();
 	}
 
 	@Override
-	public <T> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector) {
+	public <T> PreparedSelect<T> select(Class<T> type, Selector selector) {
 		return this.getOrCreateTable(type).prepareSingleSelect((SelectorImpl) selector);
 	}
 
 	@Override
-	public <T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector) {
+	public <T> PreparedSelect<T[]> selectMultiple(Class<T> type, Selector selector) {
 		return this.getOrCreateTable(type).prepareMultiSelect((SelectorImpl) selector, 0, Integer.MAX_VALUE);
 	}
 
 	@Override
-	public <T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector, int offset, int limit) {
+	public <T> PreparedSelect<T[]> selectMultiple(Class<T> type, Selector selector, int offset, int limit) {
 		return this.getOrCreateTable(type).prepareMultiSelect((SelectorImpl) selector, offset, limit);
 	}
 
 	@Override
-	public <T> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type) {
+	public <T> PreparedObjectDelete<T> deleteObject(Class<T> type) {
 		return this.getOrCreateTable(type).prepareObjectDelete();
 	}
 
 	@Override
-	public <T> PreparedDelete prepareDelete(Class<T> type, Selector selector) {
+	public <T> PreparedDelete delete(Class<T> type, Selector selector) {
 		return this.getOrCreateTable(type).prepareDelete((SelectorImpl) selector);
 	}
 
@@ -257,42 +257,42 @@ public abstract class SqlProviderImpl implements SqlProvider {
 			}
 
 			@Override
-			public PreparedReplace<T, Void> prepareReplace() {
+			public PreparedReplace<T, Void> replace() {
 				return this.table.prepareReplace();
 			}
 
 			@Override
-			public PreparedReplace<T, Long> prepareAiReplace() {
+			public PreparedReplace<T, Long> replaceAi() {
 				return this.table.prepareAiReplace();
 			}
 
 			@Override
-			public PreparedSelect<T> preparePrimarySelect() {
+			public PreparedSelect<T> selectPrimary() {
 				return this.table.preparePrimarySelect();
 			}
 
 			@Override
-			public PreparedSelect<T> prepareSelect(Selector selector) {
+			public PreparedSelect<T> select(Selector selector) {
 				return this.table.prepareSingleSelect((SelectorImpl) selector);
 			}
 
 			@Override
-			public PreparedSelect<T[]> prepareMultiSelect(Selector selector) {
+			public PreparedSelect<T[]> selectMultiple(Selector selector) {
 				return this.table.prepareMultiSelect((SelectorImpl) selector, 0, Integer.MAX_VALUE);
 			}
 
 			@Override
-			public PreparedSelect<T[]> prepareMultiSelect(Selector selector, int offset, int limit) {
+			public PreparedSelect<T[]> selectMultiple(Selector selector, int offset, int limit) {
 				return this.table.prepareMultiSelect((SelectorImpl) selector, offset, limit);
 			}
 
 			@Override
-			public PreparedObjectDelete<T> prepareObjectDelete() {
+			public PreparedObjectDelete<T> deleteObject() {
 				return this.table.prepareObjectDelete();
 			}
 
 			@Override
-			public PreparedDelete prepareDelete(Selector selector) {
+			public PreparedDelete delete(Selector selector) {
 				return this.table.prepareDelete((SelectorImpl) selector);
 			}
 		};

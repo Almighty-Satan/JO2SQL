@@ -26,19 +26,19 @@ public interface Table<T> {
 
 	DatabaseAction<Void> dropIfExists();
 
-	PreparedReplace<T, Void> prepareReplace();
+	PreparedReplace<T, Void> replace();
 
-	PreparedReplace<T, Long> prepareAiReplace();
+	PreparedReplace<T, Long> replaceAi();
 
-	PreparedSelect<T> preparePrimarySelect();
+	PreparedSelect<T> selectPrimary();
 
-	PreparedSelect<T> prepareSelect(Selector selector);
+	PreparedSelect<T> select(Selector selector);
 
-	PreparedSelect<T[]> prepareMultiSelect(Selector selector);
+	PreparedSelect<T[]> selectMultiple(Selector selector);
 
-	PreparedSelect<T[]> prepareMultiSelect(Selector selector, int offset, int limit);
+	PreparedSelect<T[]> selectMultiple(Selector selector, int offset, int limit);
 
-	PreparedObjectDelete<T> prepareObjectDelete();
+	PreparedObjectDelete<T> deleteObject();
 
-	PreparedDelete prepareDelete(Selector selector);
+	PreparedDelete delete(Selector selector);
 }

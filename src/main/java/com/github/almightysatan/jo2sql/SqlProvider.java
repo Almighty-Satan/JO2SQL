@@ -28,21 +28,21 @@ public interface SqlProvider {
 
 	<T> DatabaseAction<Void> dropIfExists(Class<T> type);
 
-	<T> PreparedReplace<T, Void> prepareReplace(Class<T> type);
+	<T> PreparedReplace<T, Void> replace(Class<T> type);
 
-	<T> PreparedReplace<T, Long> prepareAiReplace(Class<T> type);
+	<T> PreparedReplace<T, Long> replaceAi(Class<T> type);
 
-	<T> PreparedSelect<T> preparePrimarySelect(Class<T> type);
+	<T> PreparedSelect<T> selectPrimary(Class<T> type);
 
-	<T> PreparedSelect<T> prepareSelect(Class<T> type, Selector selector);
+	<T> PreparedSelect<T> select(Class<T> type, Selector selector);
 
-	<T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector);
+	<T> PreparedSelect<T[]> selectMultiple(Class<T> type, Selector selector);
 
-	<T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector, int offset, int limit);
+	<T> PreparedSelect<T[]> selectMultiple(Class<T> type, Selector selector, int offset, int limit);
 
-	<T> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type);
+	<T> PreparedObjectDelete<T> deleteObject(Class<T> type);
 
-	<T> PreparedDelete prepareDelete(Class<T> type, Selector selector);
+	<T> PreparedDelete delete(Class<T> type, Selector selector);
 
 	<T> Table<T> getTable(Class<T> type);
 

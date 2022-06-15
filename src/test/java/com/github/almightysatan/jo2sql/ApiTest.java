@@ -44,9 +44,9 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testReplaceSelect(SqlProvider sql) {
 		TestObject object = new TestObject("Hello World", true, 420);
-		sql.prepareReplace(TestObject.class).object(object).queue();
+		sql.replace(TestObject.class).object(object).queue();
 
-		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object.string)
+		TestObject deserialized = sql.select(TestObject.class, Selector.eq("string")).values(object.string)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -58,9 +58,9 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testTypes(SqlProvider sql) {
 		Types object = new Types(UUID.randomUUID(), TestEnum.DEF);
-		sql.prepareReplace(Types.class).object(object).queue();
+		sql.replace(Types.class).object(object).queue();
 
-		Types deserialized = sql.prepareSelect(Types.class, Selector.eq("uuid")).values(object.uuid).completeUnsafe();
+		Types deserialized = sql.select(Types.class, Selector.eq("uuid")).values(object.uuid).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -74,10 +74,10 @@ public class ApiTest {
 		ChildObject child = new ChildObject("Little", "Prick", 69, childChild);
 		ParentObject parent = new ParentObject(child);
 
-		long id = sql.prepareAiReplace(ParentObject.class).object(parent).completeUnsafe();
+		long id = sql.replaceAi(ParentObject.class).object(parent).completeUnsafe();
 		parent.id = id;
 
-		ParentObject deserialized = sql.prepareSelect(ParentObject.class, Selector.eq("id")).values(id)
+		ParentObject deserialized = sql.select(ParentObject.class, Selector.eq("id")).values(id)
 				.completeUnsafe();
 
 		assertEquals(parent, deserialized);
@@ -89,9 +89,9 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testInheritance(SqlProvider sql) {
 		Subclass object = new Subclass("aa", "bb");
-		object.id = sql.prepareAiReplace(Subclass.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(Subclass.class).object(object).completeUnsafe();
 
-		Subclass deserialized = sql.prepareSelect(Subclass.class, Selector.eq("id")).values(object.id).completeUnsafe();
+		Subclass deserialized = sql.select(Subclass.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -102,9 +102,9 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testAi(SqlProvider sql) {
 		ParentObject object = new ParentObject();
-		long id0 = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
-		long id1 = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
-		long id2 = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+		long id0 = sql.replaceAi(ParentObject.class).object(object).completeUnsafe();
+		long id1 = sql.replaceAi(ParentObject.class).object(object).completeUnsafe();
+		long id2 = sql.replaceAi(ParentObject.class).object(object).completeUnsafe();
 
 		assertNotEquals(id0, id1);
 		assertNotEquals(id1, id2);
@@ -116,12 +116,12 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testStringFuckery(SqlProvider sql) {
 		TestObject object0 = new TestObject("Hello World   ", true, 69);
-		sql.prepareAiReplace(TestObject.class).object(object0).queue();
+		sql.replaceAi(TestObject.class).object(object0).queue();
 
 		TestObject object1 = new TestObject("Hello World", false, 123);
-		sql.prepareAiReplace(TestObject.class).object(object1).queue();
+		sql.replaceAi(TestObject.class).object(object1).queue();
 
-		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object0.string)
+		TestObject deserialized = sql.select(TestObject.class, Selector.eq("string")).values(object0.string)
 				.completeUnsafe();
 
 		assertEquals(object0, deserialized);
@@ -133,10 +133,10 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testObjectDelete(SqlProvider sql) {
 		TestObject object = new TestObject("DeleteMeDaddy", true, 666);
-		sql.prepareReplace(TestObject.class).object(object).queue();
-		sql.prepareObjectDelete(TestObject.class).object(object).queue();
+		sql.replace(TestObject.class).object(object).queue();
+		sql.deleteObject(TestObject.class).object(object).queue();
 
-		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object.string)
+		TestObject deserialized = sql.select(TestObject.class, Selector.eq("string")).values(object.string)
 				.completeUnsafe();
 
 		assertNull(deserialized);
@@ -150,13 +150,13 @@ public class ApiTest {
 		ParentObject object = new ParentObject(new ChildObject("DeleteTestFirst", "DeleteTestLast", 1337,
 				new ChildChildObject("DeleteTestTestFirst", "DeleteTestTestFirst", 0__0)));
 
-		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
-		sql.prepareObjectDelete(ParentObject.class).overwriteNestedObjects(true).object(object).queue();
+		object.id = sql.replaceAi(ParentObject.class).object(object).completeUnsafe();
+		sql.deleteObject(ParentObject.class).overwriteNestedObjects(true).object(object).queue();
 
-		ParentObject deserialized0 = sql.preparePrimarySelect(ParentObject.class).values(object.id).completeUnsafe();
-		ChildObject deserialized1 = sql.preparePrimarySelect(ChildObject.class)
+		ParentObject deserialized0 = sql.selectPrimary(ParentObject.class).values(object.id).completeUnsafe();
+		ChildObject deserialized1 = sql.selectPrimary(ChildObject.class)
 				.values(object.child.firstName, object.child.lastName).completeUnsafe();
-		ChildChildObject deserialized2 = sql.preparePrimarySelect(ChildChildObject.class)
+		ChildChildObject deserialized2 = sql.selectPrimary(ChildChildObject.class)
 				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
 
 		assertNull(deserialized0);
@@ -173,13 +173,13 @@ public class ApiTest {
 				new ChildChildObject("DeleteTestTestFirst", "DeleteTestTestFirst", 0__0));
 		ParentObject object = new ParentObject(child);
 
-		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
-		sql.prepareObjectDelete(ParentObject.class).object(object).queue();
+		object.id = sql.replaceAi(ParentObject.class).object(object).completeUnsafe();
+		sql.deleteObject(ParentObject.class).object(object).queue();
 
-		ParentObject deserialized0 = sql.preparePrimarySelect(ParentObject.class).values(object.id).completeUnsafe();
-		ChildObject deserialized1 = sql.preparePrimarySelect(ChildObject.class)
+		ParentObject deserialized0 = sql.selectPrimary(ParentObject.class).values(object.id).completeUnsafe();
+		ChildObject deserialized1 = sql.selectPrimary(ChildObject.class)
 				.values(object.child.firstName, object.child.lastName).completeUnsafe();
-		ChildChildObject deserialized2 = sql.preparePrimarySelect(ChildChildObject.class)
+		ChildChildObject deserialized2 = sql.selectPrimary(ChildChildObject.class)
 				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
 
 		assertNull(deserialized0);
@@ -196,16 +196,16 @@ public class ApiTest {
 		ParentObject object = new ParentObject(new ChildObject("OverwriteTestFirst", "OverwriteTestLast", 1337,
 				new ChildChildObject(oldFirstName, "OverwriteTestTestFirst", 3)));
 
-		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(ParentObject.class).object(object).completeUnsafe();
 
 		object.child.child.firstName = "OverwriteTestTestNewFirst";
 		object.child.child.age++;
 
-		sql.prepareReplace(ParentObject.class).overwriteNestedObjects().object(object).queue();
+		sql.replace(ParentObject.class).overwriteNestedObjects().object(object).queue();
 
-		ChildChildObject deserializedOld = sql.preparePrimarySelect(ChildChildObject.class)
+		ChildChildObject deserializedOld = sql.selectPrimary(ChildChildObject.class)
 				.values(oldFirstName, object.child.child.lastName).completeUnsafe();
-		ChildChildObject deserializedNew = sql.preparePrimarySelect(ChildChildObject.class)
+		ChildChildObject deserializedNew = sql.selectPrimary(ChildChildObject.class)
 				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
 
 		assertNull(deserializedOld);
@@ -221,15 +221,15 @@ public class ApiTest {
 		ParentObject object = new ParentObject(
 				new ChildObject("OverwriteTestFirst", "OverwriteTestLast", 1337, oldChild));
 
-		object.id = sql.prepareAiReplace(ParentObject.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(ParentObject.class).object(object).completeUnsafe();
 
 		object.child.child = new ChildChildObject("OverwriteTestTestNewFirst", "OverwriteTestTestNewLast", 6);
 
-		sql.prepareReplace(ParentObject.class).object(object).queue();
+		sql.replace(ParentObject.class).object(object).queue();
 
-		ChildChildObject deserializedOld = sql.preparePrimarySelect(ChildChildObject.class)
+		ChildChildObject deserializedOld = sql.selectPrimary(ChildChildObject.class)
 				.values(oldChild.firstName, oldChild.lastName).completeUnsafe();
-		ChildChildObject deserializedNew = sql.preparePrimarySelect(ChildChildObject.class)
+		ChildChildObject deserializedNew = sql.selectPrimary(ChildChildObject.class)
 				.values(object.child.child.firstName, object.child.child.lastName).completeUnsafe();
 
 		assertEquals(oldChild, deserializedOld);
@@ -245,9 +245,9 @@ public class ApiTest {
 		map.put("abc", "Hello");
 		map.put("def", "World");
 		StringMap object = new StringMap(map);
-		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -262,9 +262,9 @@ public class ApiTest {
 		map.put("abc", new ChildChildObject("John", "Doe", 69));
 		map.put("def", new ChildChildObject("Jane", "Doe", 69));
 		NestedObjectMap object = new NestedObjectMap(map);
-		object.id = sql.prepareAiReplace(NestedObjectMap.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(NestedObjectMap.class).object(object).completeUnsafe();
 
-		NestedObjectMap deserialized = sql.prepareSelect(NestedObjectMap.class, Selector.eq("id")).values(object.id)
+		NestedObjectMap deserialized = sql.select(NestedObjectMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -279,11 +279,11 @@ public class ApiTest {
 		map.put("ghi", "Hi");
 		map.put("jkl", "Earth");
 		StringMap object = new StringMap(map);
-		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		sql.prepareReplace(StringMap.class).object(object).completeUnsafe();
+		sql.replace(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		// TODO test if the old rows are actually deleted (right now this test is just
@@ -300,13 +300,13 @@ public class ApiTest {
 		map.put("0123", "Hello");
 		map.put("01234", "World");
 		StringMap object = new StringMap(map);
-		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
 		map.remove("01234");
 
-		sql.prepareReplace(StringMap.class).object(object).completeUnsafe();
+		sql.replace(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -321,9 +321,9 @@ public class ApiTest {
 		list.add(new ChildChildObject("004", "005", 4862596));
 		list.add(new ChildChildObject("006", "007", 4862596));
 		NestedObjectList object = new NestedObjectList(list);
-		object.id = sql.prepareAiReplace(NestedObjectList.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(NestedObjectList.class).object(object).completeUnsafe();
 
-		NestedObjectList deserialized = sql.prepareSelect(NestedObjectList.class, Selector.eq("id")).values(object.id)
+		NestedObjectList deserialized = sql.select(NestedObjectList.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -335,9 +335,9 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testNullString(SqlProvider sql) {
 		Subclass object = new Subclass(null, null);
-		object.id = sql.prepareAiReplace(Subclass.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(Subclass.class).object(object).completeUnsafe();
 
-		Subclass deserialized = sql.prepareSelect(Subclass.class, Selector.eq("id")).values(object.id).completeUnsafe();
+		Subclass deserialized = sql.select(Subclass.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -348,9 +348,9 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testNullMap(SqlProvider sql) {
 		StringMap object = new StringMap(null);
-		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -365,9 +365,9 @@ public class ApiTest {
 		map.put("abc", "Hello");
 		map.put("def", null);
 		StringMap object = new StringMap(map);
-		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -379,9 +379,9 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testEmptyMap(SqlProvider sql) {
 		StringMap object = new StringMap(new HashMap<>());
-		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
+		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -393,7 +393,7 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testInvalidSelect(SqlProvider sql) {
 		assertThrows(Error.class,
-				() -> sql.prepareSelect(TestObject.class, Selector.eq("\"")).values("abc").completeUnsafe());
+				() -> sql.select(TestObject.class, Selector.eq("\"")).values("abc").completeUnsafe());
 		sql.terminate();
 	}
 
