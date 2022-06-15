@@ -76,15 +76,14 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 	@Override
 	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
 			throws Throwable {
-		if (value != null) {
-			for (SerializableAttribute attribute : this.table.getType().getPrimaryKey().getIndexFields()) {
-				startIndex += attribute.serialize(statement, startIndex,
-						((AnnotatedField) attribute).getField().get(value),
-						this.needsPrevValue() ? this.table.getPrevValues((T) value) : null);
-			}
-
-			this.provider.runDatabaseAction(this.replace.object((T) value));
+		for (SerializableAttribute attribute : this.table.getType().getPrimaryKey().getIndexFields()) {
+			startIndex += attribute.serialize(statement, startIndex,
+					value != null ? ((AnnotatedField) attribute).getField().get(value) : null,
+					value != null && this.needsPrevValue() ? this.table.getPrevValues((T) value) : null);
 		}
+
+		if (value != null)
+			this.provider.runDatabaseAction(this.replace.object((T) value));
 		return startIndex;
 	}
 
