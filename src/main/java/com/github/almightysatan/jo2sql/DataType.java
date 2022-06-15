@@ -20,7 +20,34 @@
 
 package com.github.almightysatan.jo2sql;
 
-public interface DataType extends SerializableType {
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+public interface DataType {
+
+	/**
+	 * Sets the parameter of a {@link PreparedStatement} to the value of this type
+	 * 
+	 * @param statement The {@link PreparedStatement}
+	 * @param index     The index of the parameter
+	 * @param value     The value that should be loaded into the
+	 *                  {@link PreparedStatement}
+	 * @throws Throwable Depending on the implementation a number of different
+	 *                   exceptions may occur
+	 */
+	void serialize(PreparedStatement statement, int index, Object value) throws Throwable;
+
+	/**
+	 * Returns a value read from the {@link ResultSet}
+	 * 
+	 * @param columnLabel A prefix that is added to the column name when loading
+	 *                    values from the {@link ResultSet}. May be empty but should
+	 *                    not be null
+	 * @param result      The {@link ResultSet}
+	 * @throws Throwable Depending on the implementation a number of different
+	 *                   exceptions may occur
+	 */
+	Object deserialize(String columnLabel, ResultSet result) throws Throwable;
 
 	Class<?>[] getClasses();
 
@@ -31,5 +58,9 @@ public interface DataType extends SerializableType {
 			if (clazz == type)
 				return true;
 		return false;
+	}
+
+	default String getPreparedReplaceSql(String columnName, String tableName) {
+		return "?";
 	}
 }
