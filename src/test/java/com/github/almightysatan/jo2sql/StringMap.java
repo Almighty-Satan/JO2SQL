@@ -24,20 +24,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-@SqlSerializable("NestedObjectMapTest")
-public class NestedObjectMapTest {
+@SqlSerializable("StringMap")
+public class StringMap {
 
 	@Column(value = "id", autoIncrement = true, primary = true)
 	long id;
 
-	@MapColumn(keyType = String.class, keySize = 100, valueType = ChildChildObject.class)
+	@MapColumn(keyType = String.class, keySize = 100, valueType = String.class, valueSize = 100)
 	@Column(value = "map", type = HashMap.class, notNull = false)
-	Map<String, ChildChildObject> map;
+	Map<String, String> map;
 
-	public NestedObjectMapTest() {
+	public StringMap() {
 	}
 
-	public NestedObjectMapTest(Map<String, ChildChildObject> map) {
+	public StringMap(Map<String, String> map) {
 		this.map = map;
 	}
 
@@ -54,12 +54,12 @@ public class NestedObjectMapTest {
 			return false;
 		if (this.getClass() != obj.getClass())
 			return false;
-		NestedObjectMapTest other = (NestedObjectMapTest) obj;
+		StringMap other = (StringMap) obj;
 		return this.id == other.id && Objects.equals(this.map, other.map);
 	}
 
 	@Override
 	public String toString() {
-		return "NestedObjectMapTest [id=" + this.id + ", map=" + this.map + "]";
+		return "StringMapTest [id=" + this.id + ", map=" + this.map + "]";
 	}
 }

@@ -20,30 +20,30 @@
 
 package com.github.almightysatan.jo2sql;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-@SqlSerializable("StringMap")
-public class StringMapTest {
+@SqlSerializable("NestedObjectList")
+public class NestedObjectList {
 
 	@Column(value = "id", autoIncrement = true, primary = true)
 	long id;
 
-	@MapColumn(keyType = String.class, keySize = 100, valueType = String.class, valueSize = 100)
-	@Column(value = "map", type = HashMap.class, notNull = false)
-	Map<String, String> map;
+	@ListColumn(valueType = ChildChildObject.class)
+	@Column(value = "list", type = ArrayList.class, notNull = false)
+	List<ChildChildObject> list;
 
-	public StringMapTest() {
+	public NestedObjectList() {
 	}
 
-	public StringMapTest(Map<String, String> map) {
-		this.map = map;
+	public NestedObjectList(List<ChildChildObject> list) {
+		this.list = list;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.id, this.map);
+		return Objects.hash(this.id, this.list);
 	}
 
 	@Override
@@ -54,12 +54,12 @@ public class StringMapTest {
 			return false;
 		if (this.getClass() != obj.getClass())
 			return false;
-		StringMapTest other = (StringMapTest) obj;
-		return this.id == other.id && Objects.equals(this.map, other.map);
+		NestedObjectList other = (NestedObjectList) obj;
+		return this.id == other.id && Objects.equals(this.list, other.list);
 	}
 
 	@Override
 	public String toString() {
-		return "StringMapTest [id=" + this.id + ", map=" + this.map + "]";
+		return "NestedObjectList [id=" + this.id + ", list=" + this.list + "]";
 	}
 }

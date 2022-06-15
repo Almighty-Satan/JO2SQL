@@ -40,6 +40,7 @@ import java.util.function.Consumer;
 import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.DataType;
 import com.github.almightysatan.jo2sql.DatabaseAction;
+import com.github.almightysatan.jo2sql.ListColumn;
 import com.github.almightysatan.jo2sql.MapColumn;
 import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
@@ -136,7 +137,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 			if (type.isOfType(clazz))
 				return new SimpleSerializableAttribute(type, tableName, columnName, size);
 
-		throw new Error(String.format("Unsupported type of field %s", columnName));
+		throw new Error(String.format("Unsupported type of column %s", columnName));
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -158,7 +159,6 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		return this.createSerializableAttribute(clazz, parent.getName(), columnName, size);
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public SerializableAttribute createSerializableAttribute(Field field, Column annotation,
 			SerializableObject<?> parent) throws Throwable {
 		Class<?> clazz = annotation.type() == void.class ? field.getType() : annotation.type();
@@ -166,9 +166,13 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		MapColumn mapAnnotation = field.getAnnotation(MapColumn.class);
 		if (mapAnnotation != null && Map.class.isAssignableFrom(clazz))
 			return new AnnotatedField(this, field, annotation,
-					new SerializableMapAttribute(this, annotation.type(), mapAnnotation.keyType(),
-							mapAnnotation.keySize(), mapAnnotation.valueType(), mapAnnotation.valueSize(),
-							annotation.value(), parent));
+					new SerializableMapAttribute(this, clazz, mapAnnotation.keyType(), mapAnnotation.keySize(),
+							mapAnnotation.valueType(), mapAnnotation.valueSize(), annotation.value(), parent));
+
+		ListColumn listAnnotation = field.getAnnotation(ListColumn.class);
+		if (listAnnotation != null && List.class.isAssignableFrom(clazz))
+			return new AnnotatedField(this, field, annotation, new SerializableListAttribute(this, clazz,
+					listAnnotation.valueType(), listAnnotation.valueSize(), annotation.value(), parent));
 
 		return this.createSerializableAttribute(clazz, annotation.value(), annotation.size(),
 				annotation.autoIncrement(), parent);

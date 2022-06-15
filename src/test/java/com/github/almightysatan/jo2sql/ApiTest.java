@@ -25,7 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -226,10 +228,10 @@ public class ApiTest {
 		Map<String, String> map = new HashMap<>();
 		map.put("abc", "Hello");
 		map.put("def", "World");
-		StringMapTest object = new StringMapTest(map);
-		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+		StringMap object = new StringMap(map);
+		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
 
-		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -243,11 +245,11 @@ public class ApiTest {
 		Map<String, ChildChildObject> map = new HashMap<>();
 		map.put("abc", new ChildChildObject("John", "Doe", 69));
 		map.put("def", new ChildChildObject("Jane", "Doe", 69));
-		NestedObjectMapTest object = new NestedObjectMapTest(map);
-		object.id = sql.prepareAiReplace(NestedObjectMapTest.class).object(object).completeUnsafe();
+		NestedObjectMap object = new NestedObjectMap(map);
+		object.id = sql.prepareAiReplace(NestedObjectMap.class).object(object).completeUnsafe();
 
-		NestedObjectMapTest deserialized = sql.prepareSelect(NestedObjectMapTest.class, Selector.eq("id"))
-				.values(object.id).completeUnsafe();
+		NestedObjectMap deserialized = sql.prepareSelect(NestedObjectMap.class, Selector.eq("id")).values(object.id)
+				.completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -260,12 +262,12 @@ public class ApiTest {
 		Map<String, String> map = new HashMap<>();
 		map.put("ghi", "Hi");
 		map.put("jkl", "Earth");
-		StringMapTest object = new StringMapTest(map);
-		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+		StringMap object = new StringMap(map);
+		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
 
-		sql.prepareReplace(StringMapTest.class).object(object).completeUnsafe();
+		sql.prepareReplace(StringMap.class).object(object).completeUnsafe();
 
-		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		// TODO test if the old rows are actually deleted (right now this test is just
@@ -281,14 +283,31 @@ public class ApiTest {
 		Map<String, String> map = new HashMap<>();
 		map.put("0123", "Hello");
 		map.put("01234", "World");
-		StringMapTest object = new StringMapTest(map);
-		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+		StringMap object = new StringMap(map);
+		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
 
 		map.remove("01234");
 
-		sql.prepareReplace(StringMapTest.class).object(object).completeUnsafe();
+		sql.prepareReplace(StringMap.class).object(object).completeUnsafe();
 
-		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
+				.completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testList(SqlProvider sql) {
+		List<ChildChildObject> list = new ArrayList<>();
+		list.add(new ChildChildObject("004", "005", 4862596));
+		list.add(new ChildChildObject("006", "007", 4862596));
+		NestedObjectList object = new NestedObjectList(list);
+		object.id = sql.prepareAiReplace(NestedObjectList.class).object(object).completeUnsafe();
+
+		NestedObjectList deserialized = sql.prepareSelect(NestedObjectList.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -312,10 +331,10 @@ public class ApiTest {
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
 	public void testNullMap(SqlProvider sql) {
-		StringMapTest object = new StringMapTest(null);
-		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+		StringMap object = new StringMap(null);
+		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
 
-		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -329,10 +348,10 @@ public class ApiTest {
 		Map<String, String> map = new HashMap<>();
 		map.put("abc", "Hello");
 		map.put("def", null);
-		StringMapTest object = new StringMapTest(map);
-		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+		StringMap object = new StringMap(map);
+		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
 
-		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
@@ -343,10 +362,10 @@ public class ApiTest {
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
 	public void testEmptyMap(SqlProvider sql) {
-		StringMapTest object = new StringMapTest(new HashMap<>());
-		object.id = sql.prepareAiReplace(StringMapTest.class).object(object).completeUnsafe();
+		StringMap object = new StringMap(new HashMap<>());
+		object.id = sql.prepareAiReplace(StringMap.class).object(object).completeUnsafe();
 
-		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
+		StringMap deserialized = sql.prepareSelect(StringMap.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
 		assertEquals(object, deserialized);
