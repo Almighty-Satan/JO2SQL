@@ -41,6 +41,7 @@ public class SerializableClass<T> implements SerializableObject<T> {
 	private final AnnotatedField[] fields;
 	private final PrimaryKey primaryKey;
 	private AnnotatedField aiField;
+	private boolean shouldGetPrevValues;
 
 	public SerializableClass(SqlProviderImpl provider, Class<T> type) throws Throwable {
 		this.type = type;
@@ -68,6 +69,12 @@ public class SerializableClass<T> implements SerializableObject<T> {
 		if (this.aiField != null && this.primaryKey.getIndexFields().length > 1)
 			throw new Error(String.format("Multiple columns in Primary Key while using Auto Increment in class %s",
 					this.type.getName()));
+
+		for (SerializableAttribute attributes : this.fields)
+			if (attributes.needsPrevValue()) {
+				this.shouldGetPrevValues = true;
+				break;
+			}
 	}
 
 	private void loadFields(SqlProviderImpl provider, List<AnnotatedField> primaryFields, Class<?> clazz)
@@ -104,7 +111,14 @@ public class SerializableClass<T> implements SerializableObject<T> {
 	}
 
 	@Override
-	public T deserialize(ResultSet result) throws Throwable {
+	public int serialize(CachedStatement statement, int startIndex, T value, ResultSet prevValues) throws Throwable {
+		for (AnnotatedField field : this.fields)
+			startIndex += field.serialize(statement, startIndex, field.getFieldValue(value), prevValues);
+		return startIndex;
+	}
+
+	@Override
+	public T deserialize(String prefix, ResultSet result) throws Throwable {
 		T instance = this.constructor.newInstance();
 		for (AnnotatedField field : this.fieldMap.values())
 			field.setFieldValue("", result, instance);
@@ -112,10 +126,8 @@ public class SerializableClass<T> implements SerializableObject<T> {
 	}
 
 	@Override
-	public void serialize(CachedStatement statement, T instance) throws Throwable {
-		int size = 0;
-		for (AnnotatedField field : this.fields)
-			size += field.serialize(statement, size, field.getFieldValue(instance), null);
+	public boolean needsPrevValue() {
+		return this.shouldGetPrevValues;
 	}
 
 	@Override

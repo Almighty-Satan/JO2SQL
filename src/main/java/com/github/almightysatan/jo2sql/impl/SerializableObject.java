@@ -20,13 +20,7 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
-import java.sql.ResultSet;
-
-public interface SerializableObject<T> {
-
-	T deserialize(ResultSet result) throws Throwable;
-
-	void serialize(CachedStatement statement, T instance) throws Throwable;
+public interface SerializableObject<T> extends Serializable<T> {
 
 	String getName();
 
@@ -37,5 +31,4 @@ public interface SerializableObject<T> {
 	SerializableAttribute[] getAttributes(String... keys);
 
 	PrimaryKey getPrimaryKey();
-
 }

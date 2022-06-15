@@ -46,18 +46,24 @@ public class SerializableMap implements SerializableObject<MapEntry> {
 	}
 
 	@Override
-	public MapEntry deserialize(ResultSet result) throws Throwable {
+	public int serialize(CachedStatement statement, int startIndex, MapEntry value, ResultSet prevValues)
+			throws Throwable {
+		startIndex += this.idAttribute.serialize(statement, startIndex, value.getId(), null);
+		startIndex += this.keyAttribute.serialize(statement, startIndex, value.getKey(), null);
+		startIndex += this.valueAttribute.serialize(statement, startIndex, value.getValue(), null);
+		return startIndex;
+	}
+
+	@Override
+	public MapEntry deserialize(String prefix, ResultSet result) throws Throwable {
 		Object key = this.keyAttribute.deserialize("", result);
 		Object value = this.valueAttribute.deserialize("", result);
 		return new MapEntry(key, value);
 	}
 
 	@Override
-	public void serialize(CachedStatement statement, MapEntry instance) throws Throwable {
-		int size = 0;
-		size += this.idAttribute.serialize(statement, size, instance.getId(), null);
-		size += this.keyAttribute.serialize(statement, size, instance.getKey(), null);
-		size += this.valueAttribute.serialize(statement, size, instance.getValue(), null);
+	public boolean needsPrevValue() {
+		return false;
 	}
 
 	@Override

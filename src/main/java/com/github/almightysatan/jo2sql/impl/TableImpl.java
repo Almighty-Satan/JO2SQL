@@ -87,7 +87,8 @@ public abstract class TableImpl<T> {
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
 					if (this.preparedDelete != null)
 						TableImpl.this.provider.runDatabaseAction(this.preparedDelete.object(value));
-					TableImpl.this.type.serialize(this.statement, value);
+					TableImpl.this.type.serialize(this.statement, 0, value,
+							TableImpl.this.type.needsPrevValue() ? TableImpl.this.getPrevValues(value) : null);
 					TableImpl.this.provider.executeUpdate(this.statement);
 				});
 			}
@@ -120,7 +121,8 @@ public abstract class TableImpl<T> {
 						this.statement = TableImpl.this.provider.prepareStatement(sql);
 					if (this.preparedDelete != null)
 						TableImpl.this.provider.runDatabaseAction(this.preparedDelete.object(value));
-					TableImpl.this.type.serialize(this.statement, value);
+					TableImpl.this.type.serialize(this.statement, 0, value,
+							TableImpl.this.type.needsPrevValue() ? TableImpl.this.getPrevValues(value) : null);
 					TableImpl.this.provider.executeUpdate(this.statement);
 					return TableImpl.this.provider.getLastInsertId(TableImpl.this.getFullName());
 				});
@@ -155,6 +157,18 @@ public abstract class TableImpl<T> {
 		return replaceBuilder.append(");").toString();
 	}
 
+	ResultSet getPrevValues(T value) throws Throwable {
+		ResultSet prevValues;
+		SerializableAttribute[] primaryAttributes = this.type.getPrimaryKey().getIndexFields();
+		Object[] primaryValues = new Object[primaryAttributes.length];
+		for (int i = 0; i < primaryAttributes.length; i++)
+			primaryValues[i] = ((AnnotatedField) primaryAttributes[i]).getFieldValue(value);
+		// TODO don't call prepareSelect every time this is executed
+		prevValues = this.provider
+				.runDatabaseAction(this.prepareSelect(this.type.getPrimaryKey().getSelector()).values(primaryValues));
+		return prevValues.next() ? prevValues : null;
+	}
+
 	PreparedSelect<T> preparePrimarySelect() {
 		return this.prepareSingleSelect(this.type.getPrimaryKey().getSelector());
 	}
@@ -163,7 +177,7 @@ public abstract class TableImpl<T> {
 		return this.prepareSelect(result -> {
 			try {
 				if (result.next())
-					return this.type.deserialize(result);
+					return this.type.deserialize("", result);
 				else
 					return null;
 			} catch (Throwable e) {
@@ -178,7 +192,7 @@ public abstract class TableImpl<T> {
 			try {
 				List<T> list = new ArrayList<>();
 				while (result.next())
-					list.add(this.type.deserialize(result));
+					list.add(this.type.deserialize("", result));
 				return list.toArray((T[]) Array.newInstance(this.type.getType(), list.size()));
 			} catch (Throwable e) {
 				throw new Error("Error while parsing result", e);

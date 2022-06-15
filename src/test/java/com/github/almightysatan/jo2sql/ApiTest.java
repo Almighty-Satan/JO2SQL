@@ -251,6 +251,8 @@ public class ApiTest {
 		StringMapTest deserialized = sql.prepareSelect(StringMapTest.class, Selector.eq("id")).values(object.id)
 				.completeUnsafe();
 
+		// TODO test if the old rows are actually deleted (right now this test is just
+		// useful for debugging)
 		assertEquals(object, deserialized);
 
 		sql.terminate();

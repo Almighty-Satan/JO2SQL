@@ -33,7 +33,6 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 	private ColumnData[] columnData;
 	private TableImpl<T> table;
 	private PreparedReplace<T, Void> replace;
-	private PreparedSelect<ResultSet> resultSetSelect;
 	private PreparedSelect<T> primarySelect;
 	private PreparedObjectDelete<T> delete;
 	private String columnName;
@@ -51,7 +50,6 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 		this.table = this.provider.getOrCreateTable(this.type);
 		this.replace = this.table.prepareReplace();
 		this.primarySelect = this.table.preparePrimarySelect();
-		this.resultSetSelect = this.table.prepareSelect(this.table.type.getPrimaryKey().getSelector());
 		this.delete = this.table.prepareObjectDelete().overwriteNestedObjects();
 
 		ColumnData[] dataArray = new ColumnData[this.table.getType().getPrimaryKey().getColumnData().length];
@@ -78,27 +76,21 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 	@Override
 	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
 			throws Throwable {
-//		ResultSet fetchedPrevValues = null;
-//		boolean hasPrevValues = false;
-//		if (this.shouldGetPrevValues) {
-//			SerializableAttribute[] primaryAttributes = this.table.getType().getPrimaryKey().getIndexFields();
-//			Object[] primaryValues = new Object[primaryAttributes.length];
-//			for (int i = 0; i < primaryAttributes.length; i++)
-//				primaryValues[i] = ((AnnotatedField) primaryAttributes[i]).getFieldValue(value);
-//			fetchedPrevValues = this.provider.runDatabaseAction(this.resultSetSelect.values(primaryValues));
-//			hasPrevValues = fetchedPrevValues != null && fetchedPrevValues.next();
-//		}
-
-		for (SerializableAttribute attribute : this.table.getType().getPrimaryKey().getIndexFields()) {
-			startIndex += attribute.serialize(statement, startIndex,
-					value == null ? null : ((AnnotatedField) attribute).getField().get(value),
-					/* hasPrevValues ? fetchedPrevValues : */ null);
-		}
 		if (value != null) {
+			for (SerializableAttribute attribute : this.table.getType().getPrimaryKey().getIndexFields()) {
+				startIndex += attribute.serialize(statement, startIndex,
+						((AnnotatedField) attribute).getField().get(value),
+						this.needsPrevValue() ? this.table.getPrevValues((T) value) : null);
+			}
 
 			this.provider.runDatabaseAction(this.replace.object((T) value));
 		}
 		return startIndex;
+	}
+
+	@Override
+	public boolean needsPrevValue() {
+		return this.shouldGetPrevValues;
 	}
 
 	@Override
@@ -126,10 +118,5 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 	@Override
 	public ColumnData[] getColumnData() {
 		return this.columnData;
-	}
-
-	@Override
-	public boolean needsPrevValue() {
-		return false;
 	}
 }
