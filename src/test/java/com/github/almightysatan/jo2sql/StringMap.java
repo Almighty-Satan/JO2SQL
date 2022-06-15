@@ -24,6 +24,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import com.github.almightysatan.jo2sql.annotations.Column;
+import com.github.almightysatan.jo2sql.annotations.MapColumn;
+
 @SqlSerializable("StringMap")
 public class StringMap {
 

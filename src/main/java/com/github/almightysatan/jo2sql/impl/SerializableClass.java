@@ -29,8 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.github.almightysatan.jo2sql.Column;
 import com.github.almightysatan.jo2sql.SqlSerializable;
+import com.github.almightysatan.jo2sql.annotations.Column;
 
 public class SerializableClass<T> implements SerializableObject<T> {
 

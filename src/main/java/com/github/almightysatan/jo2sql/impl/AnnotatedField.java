@@ -23,7 +23,7 @@ package com.github.almightysatan.jo2sql.impl;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 
-import com.github.almightysatan.jo2sql.Column;
+import com.github.almightysatan.jo2sql.annotations.Column;
 
 public class AnnotatedField implements SerializableAttribute {
 

@@ -18,7 +18,7 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql;
+package com.github.almightysatan.jo2sql.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

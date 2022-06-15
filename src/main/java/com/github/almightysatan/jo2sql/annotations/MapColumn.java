@@ -18,7 +18,7 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql;
+package com.github.almightysatan.jo2sql.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,7 +27,11 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ListColumn {
+public @interface MapColumn {
+
+	Class<?> keyType();
+
+	int keySize() default -1;
 
 	Class<?> valueType();
 

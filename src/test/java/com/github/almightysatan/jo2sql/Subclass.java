@@ -22,6 +22,8 @@ package com.github.almightysatan.jo2sql;
 
 import java.util.Objects;
 
+import com.github.almightysatan.jo2sql.annotations.Column;
+
 @SqlSerializable("Subclass")
 public class Subclass extends Superclass {
 
