@@ -67,11 +67,6 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 			}
 	}
 
-	@Override
-	public void appendIndex(StringBuilder builder, String delimiter) {
-		// TODO Auto-generated method stub
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
@@ -117,5 +112,10 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 	@Override
 	public ColumnData[] getColumnData() {
 		return this.columnData;
+	}
+
+	@Override
+	public Index[] getIndices() {
+		return new Index[0];
 	}
 }

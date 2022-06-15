@@ -78,7 +78,6 @@ public abstract class TableImpl<T> {
 						statement.append(",");
 					statement.append("`").append(column.getName()).append("`").append(column.getSqlStatement());
 				}
-				attribute.appendIndex(statement, ",");
 			}
 			this.getType().getPrimaryKey().appendIndex(statement, ",");
 			statement.append(");");
@@ -102,13 +101,35 @@ public abstract class TableImpl<T> {
 						+ column.getSqlStatement() + ";");
 			}
 		}
+
+		Map<String, Index> indices = Arrays.stream(this.type.getAttributes())
+				.flatMap(attribute -> Arrays.stream(attribute.getIndices()))
+				.collect(Collectors.toMap(Index::getName, (v) -> v, (v1, v2) -> {
+					throw new Error();
+				}, HashMap::new));
+		ResultSet result = this.provider.executeQuery(this.getIndicesSelectStatement());
+		while (result.next()) {
+			String indexName = result.getString(this.getIndexNameLabel());
+			if (indices.remove(indexName) == null && !indexName.equals("PRIMARY") && !indexName.startsWith("sqlite_"))
+				this.provider.executeUpdate(this.getIndexDropStatement(indexName));
+		}
+		for (Index index : indices.values()) {
+			this.provider.getLogger().info("Adding index %s to table %s", index.getName(), this.getFullName());
+			this.provider.executeUpdate(index.getSql(this.fullName));
+		}
 	}
 
 	protected abstract CachedStatement getTableSelectStatement();
 
 	protected abstract CachedStatement getColumnSelectStatement();
 
+	protected abstract String getIndicesSelectStatement();
+
+	protected abstract String getIndexDropStatement(String name);
+
 	protected abstract String getColumnNameLabel();
+
+	protected abstract String getIndexNameLabel();
 
 	PreparedReplace<T, Void> prepareReplace() {
 		String sql = this.buildReplaceSql();

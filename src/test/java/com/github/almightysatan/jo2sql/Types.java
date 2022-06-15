@@ -32,7 +32,7 @@ public class Types {
 	@Column(value = "uuid", primary = true)
 	public UUID uuid;
 
-	@Column("enum")
+	@Column(value = "enum", unique = true)
 	public TestEnum enumValue;
 
 	public Types() {

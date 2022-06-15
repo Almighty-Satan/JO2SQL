@@ -24,8 +24,6 @@ public interface SerializableAttribute extends Serializable<Object> {
 
 	static final char INTERNAL_COLUMN_DELIMITER = '#';
 
-	void appendIndex(StringBuilder builder, String delimiter);
-
 	/**
 	 * Deletes any nested object from the database. If this is not a nested object
 	 * this will do nothing. Otherwise it will invoke one or multiple database
@@ -40,4 +38,6 @@ public interface SerializableAttribute extends Serializable<Object> {
 	String getColumnName();
 
 	ColumnData[] getColumnData();
+
+	Index[] getIndices();
 }

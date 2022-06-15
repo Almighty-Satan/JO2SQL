@@ -64,7 +64,22 @@ public class MysqlTable<T> extends TableImpl<T> {
 	}
 
 	@Override
+	protected String getIndicesSelectStatement() {
+		return "SHOW INDEX FROM " + this.fullName + ";";
+	}
+
+	@Override
+	protected String getIndexDropStatement(String name) {
+		return "ALTER TABLE " + this.fullName + " DROP INDEX `" + name + "`;";
+	}
+
+	@Override
 	protected String getColumnNameLabel() {
 		return "COLUMN_NAME";
+	}
+
+	@Override
+	protected String getIndexNameLabel() {
+		return "Key_name";
 	}
 }

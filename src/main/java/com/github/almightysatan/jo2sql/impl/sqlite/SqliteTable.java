@@ -52,13 +52,27 @@ public class SqliteTable<T> extends TableImpl<T> {
 
 	@Override
 	protected CachedStatement getColumnSelectStatement() {
-		CachedStatement statement = this.provider.prepareStatement("PRAGMA table_info(?);");
-		statement.setParameter(0, this.provider.getStringType(), this.type.getName());
+		CachedStatement statement = this.provider.prepareStatement("PRAGMA table_info('" + this.type.getName() + "');");
 		return statement;
 	}
 
 	@Override
+	protected String getIndicesSelectStatement() {
+		return "PRAGMA index_list('" + this.type.getName() + "');";
+	}
+
+	@Override
+	protected String getIndexDropStatement(String name) {
+		return "DROP INDEX " + name + ";";
+	}
+
+	@Override
 	protected String getColumnNameLabel() {
+		return "name";
+	}
+
+	@Override
+	protected String getIndexNameLabel() {
 		return "name";
 	}
 }

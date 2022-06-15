@@ -61,11 +61,6 @@ public abstract class AbstractSerializableMapAttribute implements SerializableAt
 						SqlProviderImpl.LONG_TYPE.getPreparedReplaceSql(columnName, parentObject.getName())) };
 	}
 
-	@Override
-	public void appendIndex(StringBuilder builder, String delimiter) {
-		// TODO Auto-generated method stub
-	}
-
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
@@ -118,6 +113,11 @@ public abstract class AbstractSerializableMapAttribute implements SerializableAt
 	@Override
 	public ColumnData[] getColumnData() {
 		return this.columnData;
+	}
+
+	@Override
+	public Index[] getIndices() {
+		return new Index[0];
 	}
 
 	@Override

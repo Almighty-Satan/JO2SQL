@@ -33,6 +33,7 @@ public class AnnotatedField implements SerializableAttribute {
 	private final Class<?> type;
 	private final SerializableAttribute attribute;
 	private final ColumnData[] columnData;
+	private final Index[] indices;
 
 	public AnnotatedField(SqlProviderImpl provider, Field field, Column annotation, SerializableAttribute attribute)
 			throws Throwable {
@@ -63,6 +64,11 @@ public class AnnotatedField implements SerializableAttribute {
 			data.setSqlStatement(
 					this.appendAnnotationProperties(new StringBuilder().append(data.getSqlType())).toString());
 		}
+
+		if (annotation.unique())
+			this.indices = new Index[] { new UniqueIndex(annotation.value()) };
+		else
+			this.indices = new Index[0];
 	}
 
 	protected void processColumnData(ColumnData data) {
@@ -75,13 +81,6 @@ public class AnnotatedField implements SerializableAttribute {
 			stringBuilder.append(" NULL");
 
 		return stringBuilder;
-	}
-
-	@Override
-	public void appendIndex(StringBuilder builder, String delimiter) {
-		if (this.columnAnnotation.unique())
-			builder.append(delimiter).append("UNIQUE INDEX `").append(this.columnAnnotation.value())
-					.append("_UNIQUE` (`").append(this.columnAnnotation.value()).append("` ASC) VISIBLE");
 	}
 
 	@Override
@@ -145,6 +144,11 @@ public class AnnotatedField implements SerializableAttribute {
 	@Override
 	public ColumnData[] getColumnData() {
 		return this.columnData;
+	}
+
+	@Override
+	public Index[] getIndices() {
+		return this.indices;
 	}
 
 	@Override

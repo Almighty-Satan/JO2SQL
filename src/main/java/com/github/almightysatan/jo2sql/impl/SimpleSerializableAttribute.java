@@ -38,11 +38,6 @@ public class SimpleSerializableAttribute implements SerializableAttribute {
 	}
 
 	@Override
-	public void appendIndex(StringBuilder builder, String delimiter) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
 	public int serialize(CachedStatement statement, int startIndex, Object value, ResultSet prevValues)
 			throws Throwable {
 		statement.setParameter(startIndex, this.type, value);
@@ -68,6 +63,11 @@ public class SimpleSerializableAttribute implements SerializableAttribute {
 	public ColumnData[] getColumnData() {
 		return new ColumnData[] { new ColumnData(this.getColumnName(), this.type.getSqlType(this.size),
 				this.type.getPreparedReplaceSql(this.columnName, this.tableName)) };
+	}
+
+	@Override
+	public Index[] getIndices() {
+		return new Index[0];
 	}
 
 	@Override
