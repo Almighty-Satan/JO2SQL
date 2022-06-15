@@ -26,6 +26,7 @@ import java.util.Objects;
 
 import com.github.almightysatan.jo2sql.annotations.Column;
 import com.github.almightysatan.jo2sql.annotations.ListColumn;
+import com.github.almightysatan.jo2sql.annotations.SqlSerializable;
 
 @SqlSerializable("NestedObjectList")
 public class NestedObjectList {

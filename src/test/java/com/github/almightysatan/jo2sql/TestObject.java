@@ -23,6 +23,7 @@ package com.github.almightysatan.jo2sql;
 import java.util.Objects;
 
 import com.github.almightysatan.jo2sql.annotations.Column;
+import com.github.almightysatan.jo2sql.annotations.SqlSerializable;
 
 @SqlSerializable("TestObject")
 public class TestObject {

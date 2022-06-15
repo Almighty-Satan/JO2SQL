@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.github.almightysatan.jo2sql.annotations.Column;
+import com.github.almightysatan.jo2sql.annotations.SqlSerializable;
 
 @SqlSerializable("Types")
 public class Types {
