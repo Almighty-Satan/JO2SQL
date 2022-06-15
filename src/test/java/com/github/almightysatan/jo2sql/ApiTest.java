@@ -29,11 +29,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import com.github.almightysatan.jo2sql.Types.TestEnum;
 
 public class ApiTest {
 
@@ -41,10 +44,23 @@ public class ApiTest {
 	@MethodSource("getSqlProviders")
 	public void testReplaceSelect(SqlProvider sql) {
 		TestObject object = new TestObject("Hello World", true, 420);
-		sql.prepareAiReplace(TestObject.class).object(object).queue();
+		sql.prepareReplace(TestObject.class).object(object).queue();
 
 		TestObject deserialized = sql.prepareSelect(TestObject.class, Selector.eq("string")).values(object.string)
 				.completeUnsafe();
+
+		assertEquals(object, deserialized);
+
+		sql.terminate();
+	}
+
+	@ParameterizedTest
+	@MethodSource("getSqlProviders")
+	public void testTypes(SqlProvider sql) {
+		Types object = new Types(UUID.randomUUID(), TestEnum.DEF);
+		sql.prepareReplace(Types.class).object(object).queue();
+
+		Types deserialized = sql.prepareSelect(Types.class, Selector.eq("uuid")).values(object.uuid).completeUnsafe();
 
 		assertEquals(object, deserialized);
 

@@ -53,6 +53,7 @@ import com.github.almightysatan.jo2sql.annotations.MapColumn;
 import com.github.almightysatan.jo2sql.impl.types.BoolType;
 import com.github.almightysatan.jo2sql.impl.types.IntType;
 import com.github.almightysatan.jo2sql.impl.types.LongType;
+import com.github.almightysatan.jo2sql.impl.types.UuidType;
 import com.github.almightysatan.jo2sql.logger.Logger;
 
 public abstract class SqlProviderImpl implements SqlProvider {
@@ -74,6 +75,7 @@ public abstract class SqlProviderImpl implements SqlProvider {
 		this.logger = logger;
 		types.addAll(UNIVERSAL_DATA_TYPES);
 		types.add(this.getStringType());
+		types.add(new UuidType(this.getStringType()));
 		this.types = types;
 
 		this.executor.submit(() -> this.thread = Thread.currentThread());
@@ -133,6 +135,9 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	public SerializableAttribute createSerializableAttribute(Class<?> clazz, String tableName, String columnName,
 			int size) throws Throwable {
+		if (clazz.isEnum())
+			return new SerializableEnumAttribute(this.getStringType(), clazz, tableName, columnName);
+
 		for (DataType type : this.types)
 			if (type.isOfType(clazz))
 				return new SimpleSerializableAttribute(type, tableName, columnName, size);
