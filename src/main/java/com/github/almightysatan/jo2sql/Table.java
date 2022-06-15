@@ -36,6 +36,8 @@ public interface Table<T> {
 
 	PreparedSelect<T[]> prepareMultiSelect(Selector selector);
 
+	PreparedSelect<T[]> prepareMultiSelect(Selector selector, int offset, int limit);
+
 	PreparedObjectDelete<T> prepareObjectDelete();
 
 	PreparedDelete prepareDelete(Selector selector);

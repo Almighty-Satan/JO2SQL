@@ -38,6 +38,8 @@ public interface SqlProvider {
 
 	<T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector);
 
+	<T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector, int offset, int limit);
+
 	<T> PreparedObjectDelete<T> prepareObjectDelete(Class<T> type);
 
 	<T> PreparedDelete prepareDelete(Class<T> type, Selector selector);

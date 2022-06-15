@@ -39,7 +39,7 @@ public abstract class AbstractSerializableMapAttribute implements SerializableAt
 	private TableImpl<?> parentTable;
 	private PreparedReplace<MapEntry, Long> replace;
 	private PreparedDelete delete;
-	private PreparedSelect<MapEntry[]> primarySelect;
+	private PreparedSelect<MapEntry[]> select;
 	private String columnName;
 
 	public AbstractSerializableMapAttribute(SqlProviderImpl provider, Class<?> type, Class<?> keyType, int keySize,
@@ -54,7 +54,7 @@ public abstract class AbstractSerializableMapAttribute implements SerializableAt
 		this.replace = this.table.prepareAiReplace();
 		SelectorImpl idSelector = (SelectorImpl) Selector.eq(SerializableMap.ID_COLUMN_NAME);
 		this.delete = this.table.prepareDelete(idSelector);
-		this.primarySelect = this.table.prepareMultiSelect(idSelector);
+		this.select = this.table.prepareMultiSelect(idSelector, 0, Integer.MAX_VALUE);
 
 		this.columnData = new ColumnData[] {
 				new ColumnData(this.getColumnName(), SqlProviderImpl.LONG_TYPE.getSqlType(-1),
@@ -99,7 +99,7 @@ public abstract class AbstractSerializableMapAttribute implements SerializableAt
 	@Override
 	public Object deserialize(String prefix, ResultSet result) throws Throwable {
 		long mapId = (long) SqlProviderImpl.LONG_TYPE.deserialize(prefix + this.columnName, result);
-		return mapId == -1 ? null : this.parseValue(this.provider.runDatabaseAction(this.primarySelect.values(mapId)));
+		return mapId == -1 ? null : this.parseValue(this.provider.runDatabaseAction(this.select.values(mapId)));
 	}
 
 	protected abstract Object parseValue(MapEntry[] entries) throws InstantiationException, IllegalAccessException;

@@ -164,8 +164,8 @@ public abstract class TableImpl<T> {
 		for (int i = 0; i < primaryAttributes.length; i++)
 			primaryValues[i] = ((AnnotatedField) primaryAttributes[i]).getFieldValue(value);
 		// TODO don't call prepareSelect every time this is executed
-		prevValues = this.provider
-				.runDatabaseAction(this.prepareSelect(this.type.getPrimaryKey().getSelector()).values(primaryValues));
+		prevValues = this.provider.runDatabaseAction(
+				this.prepareSelect(this.type.getPrimaryKey().getSelector(), 0, 1).values(primaryValues));
 		return prevValues.next() ? prevValues : null;
 	}
 
@@ -183,11 +183,11 @@ public abstract class TableImpl<T> {
 			} catch (Throwable e) {
 				throw new Error("Error while parsing result", e);
 			}
-		}, selector);
+		}, selector, 0, 1);
 	}
 
 	@SuppressWarnings("unchecked")
-	PreparedSelect<T[]> prepareMultiSelect(SelectorImpl selector) {
+	PreparedSelect<T[]> prepareMultiSelect(SelectorImpl selector, int offset, int limit) {
 		return this.prepareSelect(result -> {
 			try {
 				List<T> list = new ArrayList<>();
@@ -197,11 +197,12 @@ public abstract class TableImpl<T> {
 			} catch (Throwable e) {
 				throw new Error("Error while parsing result", e);
 			}
-		}, selector);
+		}, selector, offset, limit);
 	}
 
-	<X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, SelectorImpl selector) {
-		PreparedSelect<ResultSet> preparedSelect = this.prepareSelect(selector);
+	<X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, SelectorImpl selector, int offset,
+			int limit) {
+		PreparedSelect<ResultSet> preparedSelect = this.prepareSelect(selector, offset, limit);
 
 		return new PreparedSelect<X>() {
 
@@ -215,10 +216,11 @@ public abstract class TableImpl<T> {
 		};
 	}
 
-	PreparedSelect<ResultSet> prepareSelect(SelectorImpl selector) {
+	PreparedSelect<ResultSet> prepareSelect(SelectorImpl selector, int offset, int limit) {
 		SerializableAttribute[] attributes = this.type.getAttributes(selector.getKeys());
 		String sql = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ").append("WHERE ")
-				.append(selector.getCommand()).append(";").toString();
+				.append(selector.getCommand()).append("LIMIT ").append(offset).append(", ").append(limit).append(";")
+				.toString();
 
 		return new PreparedSelect<ResultSet>() {
 
@@ -274,7 +276,8 @@ public abstract class TableImpl<T> {
 
 			@Override
 			public PreparedDelete overwriteNestedObjects(boolean overwrite) {
-				this.preparedMultiSelect = overwrite ? TableImpl.this.prepareMultiSelect(selector) : null;
+				this.preparedMultiSelect = overwrite ? TableImpl.this.prepareMultiSelect(selector, 0, Integer.MAX_VALUE)
+						: null;
 				return this;
 			}
 

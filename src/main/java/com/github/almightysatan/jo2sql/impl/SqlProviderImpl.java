@@ -222,7 +222,12 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 	@Override
 	public <T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector) {
-		return this.getOrCreateTable(type).prepareMultiSelect((SelectorImpl) selector);
+		return this.getOrCreateTable(type).prepareMultiSelect((SelectorImpl) selector, 0, Integer.MAX_VALUE);
+	}
+
+	@Override
+	public <T> PreparedSelect<T[]> prepareMultiSelect(Class<T> type, Selector selector, int offset, int limit) {
+		return this.getOrCreateTable(type).prepareMultiSelect((SelectorImpl) selector, offset, limit);
 	}
 
 	@Override
@@ -273,7 +278,12 @@ public abstract class SqlProviderImpl implements SqlProvider {
 
 			@Override
 			public PreparedSelect<T[]> prepareMultiSelect(Selector selector) {
-				return this.table.prepareMultiSelect((SelectorImpl) selector);
+				return this.table.prepareMultiSelect((SelectorImpl) selector, 0, Integer.MAX_VALUE);
+			}
+
+			@Override
+			public PreparedSelect<T[]> prepareMultiSelect(Selector selector, int offset, int limit) {
+				return this.table.prepareMultiSelect((SelectorImpl) selector, offset, limit);
 			}
 
 			@Override
