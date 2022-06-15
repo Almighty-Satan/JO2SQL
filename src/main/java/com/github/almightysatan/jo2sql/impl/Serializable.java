@@ -41,7 +41,7 @@ public interface Serializable<T> {
 	 *                   number of different exceptions.
 	 * @return The number of parameters set
 	 */
-	int serialize(CachedStatement statement, int startIndex, T instance, ResultSet prevValues) throws Throwable;
+	int serialize(CachedStatement statement, int startIndex, T value, ResultSet prevValues) throws Throwable;
 
 	/**
 	 * Creates an object that is created from the contents of the given
