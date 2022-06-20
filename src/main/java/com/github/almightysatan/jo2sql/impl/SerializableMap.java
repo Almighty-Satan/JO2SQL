@@ -22,11 +22,14 @@ package com.github.almightysatan.jo2sql.impl;
 
 import java.sql.ResultSet;
 
+import com.github.almightysatan.jo2sql.impl.attributes.SerializableAttribute;
+import com.github.almightysatan.jo2sql.impl.attributes.SimpleSerializableAttribute;
+
 public class SerializableMap implements SerializableObject<MapEntry> {
 
-	static final String ID_COLUMN_NAME = "id";
-	static final String KEY_COLUMN_NAME = "key";
-	static final String VALUE_COLUMN_NAME = "value";
+	public static final String ID_COLUMN_NAME = "id";
+	public static final String KEY_COLUMN_NAME = "key";
+	public static final String VALUE_COLUMN_NAME = "value";
 
 	private final String name;
 	private final SerializableAttribute idAttribute;

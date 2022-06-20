@@ -31,6 +31,7 @@ import java.util.Map;
 
 import com.github.almightysatan.jo2sql.annotations.Column;
 import com.github.almightysatan.jo2sql.annotations.SqlSerializable;
+import com.github.almightysatan.jo2sql.impl.attributes.SerializableAttribute;
 
 public class SerializableClass<T> implements SerializableObject<T> {
 

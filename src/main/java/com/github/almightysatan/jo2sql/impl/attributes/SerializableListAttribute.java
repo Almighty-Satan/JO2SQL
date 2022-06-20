@@ -18,13 +18,17 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.impl.attributes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+
+import com.github.almightysatan.jo2sql.impl.MapEntry;
+import com.github.almightysatan.jo2sql.impl.SerializableObject;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
 
 public class SerializableListAttribute extends AbstractSerializableMapAttribute {
 

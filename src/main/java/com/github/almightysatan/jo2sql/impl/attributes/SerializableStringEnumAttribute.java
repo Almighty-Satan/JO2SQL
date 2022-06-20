@@ -18,25 +18,24 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.impl.attributes;
 
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 
 import com.github.almightysatan.jo2sql.DataType;
+import com.github.almightysatan.jo2sql.impl.CachedStatement;
 
-public class SerializableEnumAttribute extends SimpleSerializableAttribute {
+public class SerializableStringEnumAttribute extends SimpleSerializableAttribute {
 
 	private static final int SIZE = 200;
 
-	private final Class<?> enumType;
 	private final Method valueOfMethod;
 
-	public SerializableEnumAttribute(DataType stringType, Class<?> enumType, String tableName, String columnName)
+	public SerializableStringEnumAttribute(DataType stringType, Class<?> enumType, String tableName, String columnName)
 			throws NoSuchMethodException, SecurityException {
 		super(stringType, tableName, columnName, SIZE);
-		this.enumType = enumType;
-		this.valueOfMethod = this.enumType.getDeclaredMethod("valueOf", String.class);
+		this.valueOfMethod = enumType.getDeclaredMethod("valueOf", String.class);
 	}
 
 	@Override

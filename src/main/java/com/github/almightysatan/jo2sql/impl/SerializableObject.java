@@ -20,6 +20,8 @@
 
 package com.github.almightysatan.jo2sql.impl;
 
+import com.github.almightysatan.jo2sql.impl.attributes.SerializableAttribute;
+
 public interface SerializableObject<T> extends Serializable<T> {
 
 	String getName();

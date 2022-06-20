@@ -37,6 +37,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import com.github.almightysatan.jo2sql.Types.TestEnum;
+import com.github.almightysatan.jo2sql.Types.TestIdEnum;
 
 public class ApiTest {
 
@@ -57,7 +58,7 @@ public class ApiTest {
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
 	public void testTypes(SqlProvider sql) {
-		Types object = new Types(UUID.randomUUID(), TestEnum.DEF);
+		Types object = new Types(UUID.randomUUID(), TestEnum.DEF, TestIdEnum.DEF);
 		sql.replace(Types.class).object(object).queue();
 
 		Types deserialized = sql.select(Types.class, Selector.eq("uuid")).values(object.uuid).completeUnsafe();
@@ -77,8 +78,7 @@ public class ApiTest {
 		long id = sql.replaceAi(ParentObject.class).object(parent).completeUnsafe();
 		parent.id = id;
 
-		ParentObject deserialized = sql.select(ParentObject.class, Selector.eq("id")).values(id)
-				.completeUnsafe();
+		ParentObject deserialized = sql.select(ParentObject.class, Selector.eq("id")).values(id).completeUnsafe();
 
 		assertEquals(parent, deserialized);
 
@@ -247,8 +247,7 @@ public class ApiTest {
 		StringMap object = new StringMap(map);
 		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
-				.completeUnsafe();
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -283,8 +282,7 @@ public class ApiTest {
 
 		sql.replace(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
-				.completeUnsafe();
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		// TODO test if the old rows are actually deleted (right now this test is just
 		// useful for debugging)
@@ -306,8 +304,7 @@ public class ApiTest {
 
 		sql.replace(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
-				.completeUnsafe();
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -350,8 +347,7 @@ public class ApiTest {
 		StringMap object = new StringMap(null);
 		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
-				.completeUnsafe();
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -367,8 +363,7 @@ public class ApiTest {
 		StringMap object = new StringMap(map);
 		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
-				.completeUnsafe();
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -381,8 +376,7 @@ public class ApiTest {
 		StringMap object = new StringMap(new HashMap<>());
 		object.id = sql.replaceAi(StringMap.class).object(object).completeUnsafe();
 
-		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id)
-				.completeUnsafe();
+		StringMap deserialized = sql.select(StringMap.class, Selector.eq("id")).values(object.id).completeUnsafe();
 
 		assertEquals(object, deserialized);
 
@@ -392,8 +386,7 @@ public class ApiTest {
 	@ParameterizedTest
 	@MethodSource("getSqlProviders")
 	public void testInvalidSelect(SqlProvider sql) {
-		assertThrows(Error.class,
-				() -> sql.select(TestObject.class, Selector.eq("\"")).values("abc").completeUnsafe());
+		assertThrows(Error.class, () -> sql.select(TestObject.class, Selector.eq("\"")).values("abc").completeUnsafe());
 		sql.terminate();
 	}
 

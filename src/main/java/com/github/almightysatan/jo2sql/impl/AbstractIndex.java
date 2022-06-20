@@ -22,6 +22,8 @@ package com.github.almightysatan.jo2sql.impl;
 
 import java.util.Arrays;
 
+import com.github.almightysatan.jo2sql.impl.attributes.SerializableAttribute;
+
 public abstract class AbstractIndex {
 
 	private final SerializableAttribute[] indexFields;

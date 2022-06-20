@@ -18,13 +18,19 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.impl.attributes;
 
 import java.sql.ResultSet;
 
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
+import com.github.almightysatan.jo2sql.impl.AnnotatedField;
+import com.github.almightysatan.jo2sql.impl.CachedStatement;
+import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.impl.Index;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.impl.TableImpl;
 
 public class SerializableNestedClassAttribute<T> implements SerializableAttribute {
 
@@ -60,7 +66,7 @@ public class SerializableNestedClassAttribute<T> implements SerializableAttribut
 		}
 		this.columnData = dataArray;
 
-		for (SerializableAttribute attributes : this.table.type.getAttributes())
+		for (SerializableAttribute attributes : this.table.getType().getAttributes())
 			if (attributes.needsPrevValue()) {
 				this.shouldGetPrevValues = true;
 				break;

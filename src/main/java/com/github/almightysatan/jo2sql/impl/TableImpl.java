@@ -35,6 +35,7 @@ import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedObjectDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
+import com.github.almightysatan.jo2sql.impl.attributes.SerializableAttribute;
 
 public abstract class TableImpl<T> {
 
@@ -131,7 +132,7 @@ public abstract class TableImpl<T> {
 
 	protected abstract String getIndexNameLabel();
 
-	PreparedReplace<T, Void> prepareReplace() {
+	public PreparedReplace<T, Void> prepareReplace() {
 		String sql = this.buildReplaceSql();
 
 		return new PreparedReplace<T, Void>() {
@@ -165,7 +166,7 @@ public abstract class TableImpl<T> {
 		};
 	}
 
-	PreparedReplace<T, Long> prepareAiReplace() {
+	public PreparedReplace<T, Long> prepareAiReplace() {
 		String sql = this.buildReplaceSql();
 
 		return new PreparedReplace<T, Long>() {
@@ -227,7 +228,7 @@ public abstract class TableImpl<T> {
 		return replaceBuilder.append(");").toString();
 	}
 
-	ResultSet getPrevValues(T value) throws Throwable {
+	public ResultSet getPrevValues(T value) throws Throwable {
 		ResultSet prevValues;
 		SerializableAttribute[] primaryAttributes = this.type.getPrimaryKey().getIndexFields();
 		Object[] primaryValues = new Object[primaryAttributes.length];
@@ -239,7 +240,7 @@ public abstract class TableImpl<T> {
 		return prevValues.next() ? prevValues : null;
 	}
 
-	PreparedSelect<T> preparePrimarySelect() {
+	public PreparedSelect<T> preparePrimarySelect() {
 		return this.prepareSingleSelect(this.type.getPrimaryKey().getSelector());
 	}
 
@@ -257,7 +258,7 @@ public abstract class TableImpl<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	PreparedSelect<T[]> prepareMultiSelect(SelectorImpl selector, int offset, int limit) {
+	public PreparedSelect<T[]> prepareMultiSelect(SelectorImpl selector, int offset, int limit) {
 		return this.prepareSelect(result -> {
 			try {
 				List<T> list = new ArrayList<>();
@@ -322,7 +323,7 @@ public abstract class TableImpl<T> {
 		}, selector, 0, Integer.MAX_VALUE, "COUNT(*)");
 	}
 
-	PreparedObjectDelete<T> prepareObjectDelete() {
+	public PreparedObjectDelete<T> prepareObjectDelete() {
 		SerializableAttribute[] attributes = this.type.getAttributes(this.type.getPrimaryKey().getSelector().getKeys());
 		PreparedDelete preparedDelete = this.prepareDelete(this.type.getPrimaryKey().getSelector());
 		return new PreparedObjectDelete<T>() {
@@ -344,7 +345,7 @@ public abstract class TableImpl<T> {
 		};
 	}
 
-	PreparedDelete prepareDelete(SelectorImpl selector) {
+	public PreparedDelete prepareDelete(SelectorImpl selector) {
 		SerializableAttribute[] attributes = this.type.getAttributes(selector.getKeys());
 		String sql = new StringBuilder("DELETE FROM ").append(this.fullName).append("WHERE ")
 				.append(selector.getCommand()).append(";").toString();

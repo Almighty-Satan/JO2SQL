@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 
 import com.github.almightysatan.jo2sql.annotations.Column;
+import com.github.almightysatan.jo2sql.impl.attributes.SerializableAttribute;
 
 public class AnnotatedField implements SerializableAttribute {
 

@@ -18,26 +18,16 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.annotations;
 
-public interface SerializableAttribute extends Serializable<Object> {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-	static final char INTERNAL_COLUMN_DELIMITER = '#';
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface EnumId {
 
-	/**
-	 * Deletes any nested object from the database. If this is not a nested object
-	 * this will do nothing. Otherwise it will invoke one or multiple database
-	 * requests.
-	 * 
-	 * @param value The object to be deleted
-	 * @throws Throwable Depending on the implementation this method may throw a
-	 *                   number of different exceptions
-	 */
-	void deleteNested(Object value) throws Throwable;
-
-	String getColumnName();
-
-	ColumnData[] getColumnData();
-
-	Index[] getIndices();
+	int value();
 }

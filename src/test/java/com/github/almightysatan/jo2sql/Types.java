@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.github.almightysatan.jo2sql.annotations.Column;
+import com.github.almightysatan.jo2sql.annotations.EnumId;
 import com.github.almightysatan.jo2sql.annotations.SqlSerializable;
 
 @SqlSerializable("Types")
@@ -35,17 +36,21 @@ public class Types {
 	@Column(value = "enum", unique = true)
 	public TestEnum enumValue;
 
+	@Column(value = "idEnum", unique = true)
+	public TestIdEnum idEnumValue;
+
 	public Types() {
 	}
 
-	public Types(UUID uuid, TestEnum enumValue) {
+	public Types(UUID uuid, TestEnum enumValue, TestIdEnum idEnumValue) {
 		this.uuid = uuid;
 		this.enumValue = enumValue;
+		this.idEnumValue = idEnumValue;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.enumValue, this.uuid);
+		return Objects.hash(this.enumValue, this.idEnumValue, this.uuid);
 	}
 
 	@Override
@@ -57,16 +62,23 @@ public class Types {
 		if (this.getClass() != obj.getClass())
 			return false;
 		Types other = (Types) obj;
-		return this.enumValue == other.enumValue && Objects.equals(this.uuid, other.uuid);
+		return this.enumValue == other.enumValue && this.idEnumValue == other.idEnumValue
+				&& Objects.equals(this.uuid, other.uuid);
 	}
 
 	@Override
 	public String toString() {
-		return "Types [uuid=" + this.uuid + ", enumValue=" + this.enumValue + "]";
+		return "Types [uuid=" + this.uuid + ", enumValue=" + this.enumValue + ", idEnumValue=" + this.idEnumValue + "]";
 	}
 
 	public static enum TestEnum {
 		ABC, DEF, GHI;
 	}
 
+	public static enum TestIdEnum {
+		@EnumId(1)
+		ABC, @EnumId(2)
+		DEF, @EnumId(69)
+		GHI;
+	}
 }

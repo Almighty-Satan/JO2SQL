@@ -18,7 +18,7 @@
  * USA
  */
 
-package com.github.almightysatan.jo2sql.impl;
+package com.github.almightysatan.jo2sql.impl.attributes;
 
 import java.sql.ResultSet;
 import java.util.Collection;
@@ -28,6 +28,15 @@ import com.github.almightysatan.jo2sql.PreparedDelete;
 import com.github.almightysatan.jo2sql.PreparedReplace;
 import com.github.almightysatan.jo2sql.PreparedSelect;
 import com.github.almightysatan.jo2sql.Selector;
+import com.github.almightysatan.jo2sql.impl.CachedStatement;
+import com.github.almightysatan.jo2sql.impl.ColumnData;
+import com.github.almightysatan.jo2sql.impl.Index;
+import com.github.almightysatan.jo2sql.impl.MapEntry;
+import com.github.almightysatan.jo2sql.impl.SelectorImpl;
+import com.github.almightysatan.jo2sql.impl.SerializableMap;
+import com.github.almightysatan.jo2sql.impl.SerializableObject;
+import com.github.almightysatan.jo2sql.impl.SqlProviderImpl;
+import com.github.almightysatan.jo2sql.impl.TableImpl;
 
 public abstract class AbstractSerializableMapAttribute implements SerializableAttribute {
 
