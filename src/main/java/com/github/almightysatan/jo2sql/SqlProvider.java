@@ -40,6 +40,8 @@ public interface SqlProvider {
 
 	<T> PreparedSelect<T[]> selectMultiple(Class<T> type, Selector selector, int offset, int limit);
 
+	<T> PreparedSelect<Integer> count(Class<T> type, Selector selector);
+
 	<T> PreparedObjectDelete<T> deleteObject(Class<T> type);
 
 	<T> PreparedDelete delete(Class<T> type, Selector selector);

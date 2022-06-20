@@ -38,6 +38,8 @@ public interface Table<T> {
 
 	PreparedSelect<T[]> selectMultiple(Selector selector, int offset, int limit);
 
+	PreparedSelect<Integer> count(Selector selector);
+
 	PreparedObjectDelete<T> deleteObject();
 
 	PreparedDelete delete(Selector selector);

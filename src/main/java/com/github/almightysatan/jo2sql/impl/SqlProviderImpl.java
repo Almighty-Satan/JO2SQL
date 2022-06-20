@@ -231,6 +231,11 @@ public abstract class SqlProviderImpl implements SqlProvider {
 	}
 
 	@Override
+	public <T> PreparedSelect<Integer> count(Class<T> type, Selector selector) {
+		return this.getOrCreateTable(type).count((SelectorImpl) selector);
+	}
+
+	@Override
 	public <T> PreparedObjectDelete<T> deleteObject(Class<T> type) {
 		return this.getOrCreateTable(type).prepareObjectDelete();
 	}
@@ -284,6 +289,11 @@ public abstract class SqlProviderImpl implements SqlProvider {
 			@Override
 			public PreparedSelect<T[]> selectMultiple(Selector selector, int offset, int limit) {
 				return this.table.prepareMultiSelect((SelectorImpl) selector, offset, limit);
+			}
+
+			@Override
+			public PreparedSelect<Integer> count(Selector selector) {
+				return this.table.count((SelectorImpl) selector);
 			}
 
 			@Override

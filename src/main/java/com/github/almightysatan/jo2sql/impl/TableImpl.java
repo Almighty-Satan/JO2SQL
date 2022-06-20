@@ -235,7 +235,7 @@ public abstract class TableImpl<T> {
 			primaryValues[i] = ((AnnotatedField) primaryAttributes[i]).getFieldValue(value);
 		// TODO don't call prepareSelect every time this is executed
 		prevValues = this.provider.runDatabaseAction(
-				this.prepareSelect(this.type.getPrimaryKey().getSelector(), 0, 1).values(primaryValues));
+				this.prepareSelect(this.type.getPrimaryKey().getSelector(), 0, 1, "*").values(primaryValues));
 		return prevValues.next() ? prevValues : null;
 	}
 
@@ -253,7 +253,7 @@ public abstract class TableImpl<T> {
 			} catch (Throwable e) {
 				throw new Error("Error while parsing result", e);
 			}
-		}, selector, 0, 1);
+		}, selector, 0, 1, "*");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -267,12 +267,12 @@ public abstract class TableImpl<T> {
 			} catch (Throwable e) {
 				throw new Error("Error while parsing result", e);
 			}
-		}, selector, offset, limit);
+		}, selector, offset, limit, "*");
 	}
 
 	<X> PreparedSelect<X> prepareSelect(Function<ResultSet, X> resultInterpreter, SelectorImpl selector, int offset,
-			int limit) {
-		PreparedSelect<ResultSet> preparedSelect = this.prepareSelect(selector, offset, limit);
+			int limit, String selectedColumns) {
+		PreparedSelect<ResultSet> preparedSelect = this.prepareSelect(selector, offset, limit, selectedColumns);
 
 		return new PreparedSelect<X>() {
 
@@ -286,11 +286,11 @@ public abstract class TableImpl<T> {
 		};
 	}
 
-	PreparedSelect<ResultSet> prepareSelect(SelectorImpl selector, int offset, int limit) {
+	PreparedSelect<ResultSet> prepareSelect(SelectorImpl selector, int offset, int limit, String selectedColumns) {
 		SerializableAttribute[] attributes = this.type.getAttributes(selector.getKeys());
-		String sql = new StringBuilder("SELECT * FROM ").append(this.fullName).append(" ").append("WHERE ")
-				.append(selector.getCommand()).append(" LIMIT ").append(offset).append(", ").append(limit).append(";")
-				.toString();
+		String sql = new StringBuilder("SELECT ").append(selectedColumns).append(" FROM ").append(this.fullName)
+				.append(" ").append("WHERE ").append(selector.getCommand()).append(" LIMIT ").append(offset)
+				.append(", ").append(limit).append(";").toString();
 
 		return new PreparedSelect<ResultSet>() {
 
@@ -310,6 +310,16 @@ public abstract class TableImpl<T> {
 				});
 			}
 		};
+	}
+
+	PreparedSelect<Integer> count(SelectorImpl selector) {
+		return this.prepareSelect(result -> {
+			try {
+				return result.next() ? (int) SqlProviderImpl.INT_TYPE.deserialize("count(*)", result) : 0;
+			} catch (Throwable e) {
+				throw new Error("Error while parsing result", e);
+			}
+		}, selector, 0, Integer.MAX_VALUE, "COUNT(*)");
 	}
 
 	PreparedObjectDelete<T> prepareObjectDelete() {
